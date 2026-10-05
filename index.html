@@ -31,16 +31,19 @@
     <div class="container hero-content">
       <h1 class="hero-title">كافيه <span>شغف</span></h1>
       <p class="hero-subtitle">حيث تلتقي النكهة بالشغف • حلويات فاخرة وقهوة استثنائية</p>
+      <a href="#menuArea" class="btn-primary">استكشف القائمة</a>
     </div>
   </section>
 
-  <!-- Sticky Filters + Search -->
-  <div class="filters-bar" id="filtersBar">
+  <!-- Sticky Filter + Search -->
+  <div class="filter-bar" id="filterBar">
     <div class="container">
-      <div class="category-pills" id="categoryPills"></div>
       <div class="search-wrap">
         <input type="search" id="searchInput" placeholder="ابحث عن صنفك المفضل..." autocomplete="off">
         <span class="search-icon">🔍</span>
+      </div>
+      <div class="cat-pills" id="catPills">
+        <button class="cat-btn active" data-cat="all" onclick="filterCategory('all')">الكل</button>
       </div>
     </div>
   </div>
@@ -52,23 +55,52 @@
   </div>
 
   <!-- Menu -->
-  <main id="menuContainer" style="display:none;"></main>
+  <main id="menuArea" class="menu-area" style="display:none;">
+    <div class="container">
+      <h2 class="section-title-main" id="currentCatTitle">كل الأصناف</h2>
+      <div class="menu-grid" id="menuGrid"></div>
+      <p id="noResults" class="no-results" style="display:none;">لا توجد نتائج</p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="logo-icon">☕</span>
+          <span class="logo-text">شغف</span>
+          <p>نقدم لكم أفضل الحلويات والقهوة بكل حب وشغف</p>
+        </div>
+        <div class="footer-social" id="footerSocial"></div>
+        <div class="footer-contact">
+          <h4>تواصل معنا</h4>
+          <p id="footerWhatsapp">📞 —</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 كافيه شغف. جميع الحقوق محفوظة.</p>
+      </div>
+    </div>
+  </footer>
 
   <!-- Floating Cart Bar -->
   <div class="cart-bar" id="cartBar" style="display:none;">
-    <button class="cart-bar-btn" onclick="openCart()">
-      <span class="cart-count" id="cartCount">0</span>
-      <span>عرض السلة</span>
-      <span class="cart-total" id="cartTotal">0 ر.س</span>
-    </button>
+    <div class="cart-bar-inner">
+      <span class="cart-count-badge" id="cartCountBadge">0</span>
+      <button class="cart-bar-btn" id="openCartBtn">
+        <span>عرض السلة</span>
+        <span id="cartTotalText">0 ر.س</span>
+      </button>
+    </div>
   </div>
 
   <!-- Cart Modal -->
   <div class="modal" id="cartModal">
     <div class="modal-content cart-modal-content">
       <div class="modal-header">
-        <h2>🛒 سلة الطلبات</h2>
-        <button class="modal-close" onclick="closeCart()">&times;</button>
+        <h2>سلة الطلبات</h2>
+        <button class="modal-close" id="closeCartModal">&times;</button>
       </div>
       <div class="modal-body" id="cartBody"></div>
     </div>
@@ -85,31 +117,9 @@
     </div>
   </div>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <span class="logo-icon">☕</span>
-          <span class="logo-text">شغف</span>
-          <p>نقدم لكم أفضل الحلويات والقهوة بكل حب وشغف</p>
-        </div>
-        <div class="footer-links">
-          <h4>الأقسام</h4>
-          <div id="footerCats"></div>
-        </div>
-        <div class="footer-contact">
-          <h4>تواصل معنا</h4>
-          <div class="social-links" id="socialLinks"></div>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>© 2026 كافيه شغف. جميع الحقوق محفوظة.</p>
-      </div>
-    </div>
-  </footer>
-
+  <!-- Toast -->
   <div class="toast" id="toast"></div>
+
   <script src="app.js"></script>
 </body>
 </html>
