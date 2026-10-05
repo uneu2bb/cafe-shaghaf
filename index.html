@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <!-- Supabase JS Client (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <!-- Header -->
@@ -46,8 +48,14 @@
     </div>
   </section>
 
+  <!-- Loading State -->
+  <div id="loadingState" class="loading-state">
+    <div class="spinner"></div>
+    <p>جاري تحميل القائمة...</p>
+  </div>
+
   <!-- Menu Sections will be injected here -->
-  <main id="menuContainer"></main>
+  <main id="menuContainer" style="display:none;"></main>
 
   <!-- Footer -->
   <footer class="footer">
