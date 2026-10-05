@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>كافيه شغف | Café Shaghaf</title>
   <meta name="description" content="كافيه شغف - حلويات، كيك، بوظة، قهوات ساخنة وباردة، وعصائر طازجة">
+  <link rel="icon" id="faviconLink" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -12,20 +13,16 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <!-- Header -->
   <header class="header" id="header">
     <div class="container header-inner">
-      <a href="#" class="logo" onclick="filterCategory('all'); return false;">
-        <span class="logo-icon">☕</span>
+      <a href="#" class="logo" id="logoBtn">
+        <img id="logoImg" class="logo-img" src="" alt="" style="display:none;">
+        <span class="logo-icon" id="logoIcon">☕</span>
         <span class="logo-text">شغف</span>
       </a>
-      <div class="header-actions">
-        <button class="btn-admin" id="adminBtn" title="لوحة التحكم">⚙️</button>
-      </div>
     </div>
   </header>
 
-  <!-- Hero -->
   <section class="hero">
     <div class="hero-overlay"></div>
     <div class="container hero-content">
@@ -35,7 +32,6 @@
     </div>
   </section>
 
-  <!-- Sticky Filter + Search -->
   <div class="filter-bar" id="filterBar">
     <div class="container">
       <div class="search-wrap">
@@ -48,13 +44,11 @@
     </div>
   </div>
 
-  <!-- Loading -->
   <div id="loadingState" class="loading-state">
     <div class="spinner"></div>
     <p>جاري تحميل القائمة...</p>
   </div>
 
-  <!-- Menu -->
   <main id="menuArea" class="menu-area" style="display:none;">
     <div class="container">
       <h2 class="section-title-main" id="currentCatTitle">كل الأصناف</h2>
@@ -63,7 +57,6 @@
     </div>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
     <div class="container">
       <div class="footer-grid">
@@ -79,12 +72,11 @@
         </div>
       </div>
       <div class="footer-bottom">
-        <p>© 2026 كافيه شغف. جميع الحقوق محفوظة.</p>
+        <p id="secretArea">© 2026 كافيه شغف. جميع الحقوق محفوظة.</p>
       </div>
     </div>
   </footer>
 
-  <!-- Floating Cart Bar -->
   <div class="cart-bar" id="cartBar" style="display:none;">
     <div class="cart-bar-inner">
       <span class="cart-count-badge" id="cartCountBadge">0</span>
@@ -95,7 +87,6 @@
     </div>
   </div>
 
-  <!-- Cart Modal -->
   <div class="modal" id="cartModal">
     <div class="modal-content cart-modal-content">
       <div class="modal-header">
@@ -106,20 +97,18 @@
     </div>
   </div>
 
-  <!-- Admin Modal -->
   <div class="modal" id="adminModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>لوحة التحكم</h2>
+        <h2 id="adminModalTitle">لوحة التحكم</h2>
         <button class="modal-close" id="closeModal">&times;</button>
       </div>
       <div class="modal-body" id="adminBody"></div>
     </div>
   </div>
 
-  <!-- Toast -->
   <div class="toast" id="toast"></div>
-
+  <input type="file" id="fileInput" accept="image/*" style="display:none;">
   <script src="app.js"></script>
 </body>
 </html>
