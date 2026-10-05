@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>كافيه شغف | Café Shaghaf</title>
+  <meta name="description" content="كافيه شغف - حلويات، كيك، بوظة، قهوات ساخنة وباردة، وعصائر طازجة">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="#" class="logo">
+        <span class="logo-icon">☕</span>
+        <span class="logo-text">شغف</span>
+      </a>
+      <nav class="nav" id="nav">
+        <a href="#cakes" class="nav-link">كيك</a>
+        <a href="#icecream" class="nav-link">بوظة</a>
+        <a href="#western" class="nav-link">حلو غربي</a>
+        <a href="#eastern" class="nav-link">حلو شرقي</a>
+        <a href="#cold-coffee" class="nav-link">قهوات باردة</a>
+        <a href="#hot-coffee" class="nav-link">قهوات ساخنة</a>
+        <a href="#juices" class="nav-link">عصائر</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-admin" id="adminBtn" title="لوحة التحكم">⚙️</button>
+        <button class="menu-toggle" id="menuToggle" aria-label="القائمة">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+      <h1 class="hero-title">كافيه <span>شغف</span></h1>
+      <p class="hero-subtitle">حيث تلتقي النكهة بالشغف • حلويات فاخرة وقهوة استثنائية</p>
+      <a href="#cakes" class="btn-primary">استكشف القائمة</a>
+    </div>
+  </section>
+
+  <!-- Menu Sections will be injected here -->
+  <main id="menuContainer"></main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="logo-icon">☕</span>
+          <span class="logo-text">شغف</span>
+          <p>نقدم لكم أفضل الحلويات والقهوة بكل حب وشغف</p>
+        </div>
+        <div class="footer-links">
+          <h4>الأقسام</h4>
+          <a href="#cakes">كيك</a>
+          <a href="#icecream">بوظة</a>
+          <a href="#western">حلو غربي</a>
+          <a href="#eastern">حلو شرقي</a>
+        </div>
+        <div class="footer-contact">
+          <h4>تواصل معنا</h4>
+          <p>📍 الرياض، المملكة العربية السعودية</p>
+          <p>📞 0500000000</p>
+          <p>📧 info@shaghaf.cafe</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 كافيه شغف. جميع الحقوق محفوظة.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Admin Modal -->
+  <div class="modal" id="adminModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>لوحة التحكم</h2>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body" id="adminBody">
+        <!-- Login or Admin Panel -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
