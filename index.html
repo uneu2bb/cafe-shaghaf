@@ -9,31 +9,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <!-- Supabase JS Client (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <!-- Header -->
   <header class="header" id="header">
     <div class="container header-inner">
-      <a href="#" class="logo">
+      <a href="#" class="logo" onclick="filterCategory('all'); return false;">
         <span class="logo-icon">☕</span>
         <span class="logo-text">شغف</span>
       </a>
-      <nav class="nav" id="nav">
-        <a href="#cakes" class="nav-link">كيك</a>
-        <a href="#icecream" class="nav-link">بوظة</a>
-        <a href="#western" class="nav-link">حلو غربي</a>
-        <a href="#eastern" class="nav-link">حلو شرقي</a>
-        <a href="#cold-coffee" class="nav-link">قهوات باردة</a>
-        <a href="#hot-coffee" class="nav-link">قهوات ساخنة</a>
-        <a href="#juices" class="nav-link">عصائر</a>
-      </nav>
       <div class="header-actions">
         <button class="btn-admin" id="adminBtn" title="لوحة التحكم">⚙️</button>
-        <button class="menu-toggle" id="menuToggle" aria-label="القائمة">
-          <span></span><span></span><span></span>
-        </button>
       </div>
     </div>
   </header>
@@ -44,18 +31,59 @@
     <div class="container hero-content">
       <h1 class="hero-title">كافيه <span>شغف</span></h1>
       <p class="hero-subtitle">حيث تلتقي النكهة بالشغف • حلويات فاخرة وقهوة استثنائية</p>
-      <a href="#cakes" class="btn-primary">استكشف القائمة</a>
     </div>
   </section>
 
-  <!-- Loading State -->
+  <!-- Sticky Filters + Search -->
+  <div class="filters-bar" id="filtersBar">
+    <div class="container">
+      <div class="category-pills" id="categoryPills"></div>
+      <div class="search-wrap">
+        <input type="search" id="searchInput" placeholder="ابحث عن صنفك المفضل..." autocomplete="off">
+        <span class="search-icon">🔍</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
   <div id="loadingState" class="loading-state">
     <div class="spinner"></div>
     <p>جاري تحميل القائمة...</p>
   </div>
 
-  <!-- Menu Sections will be injected here -->
+  <!-- Menu -->
   <main id="menuContainer" style="display:none;"></main>
+
+  <!-- Floating Cart Bar -->
+  <div class="cart-bar" id="cartBar" style="display:none;">
+    <button class="cart-bar-btn" onclick="openCart()">
+      <span class="cart-count" id="cartCount">0</span>
+      <span>عرض السلة</span>
+      <span class="cart-total" id="cartTotal">0 ر.س</span>
+    </button>
+  </div>
+
+  <!-- Cart Modal -->
+  <div class="modal" id="cartModal">
+    <div class="modal-content cart-modal-content">
+      <div class="modal-header">
+        <h2>🛒 سلة الطلبات</h2>
+        <button class="modal-close" onclick="closeCart()">&times;</button>
+      </div>
+      <div class="modal-body" id="cartBody"></div>
+    </div>
+  </div>
+
+  <!-- Admin Modal -->
+  <div class="modal" id="adminModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>لوحة التحكم</h2>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body" id="adminBody"></div>
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer class="footer">
@@ -68,16 +96,11 @@
         </div>
         <div class="footer-links">
           <h4>الأقسام</h4>
-          <a href="#cakes">كيك</a>
-          <a href="#icecream">بوظة</a>
-          <a href="#western">حلو غربي</a>
-          <a href="#eastern">حلو شرقي</a>
+          <div id="footerCats"></div>
         </div>
         <div class="footer-contact">
           <h4>تواصل معنا</h4>
-          <p>📍 الرياض، المملكة العربية السعودية</p>
-          <p>📞 0500000000</p>
-          <p>📧 info@shaghaf.cafe</p>
+          <div class="social-links" id="socialLinks"></div>
         </div>
       </div>
       <div class="footer-bottom">
@@ -86,22 +109,7 @@
     </div>
   </footer>
 
-  <!-- Admin Modal -->
-  <div class="modal" id="adminModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>لوحة التحكم</h2>
-        <button class="modal-close" id="closeModal">&times;</button>
-      </div>
-      <div class="modal-body" id="adminBody">
-        <!-- Login or Admin Panel -->
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast -->
   <div class="toast" id="toast"></div>
-
   <script src="app.js"></script>
 </body>
 </html>
