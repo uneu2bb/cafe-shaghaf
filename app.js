@@ -1,108 +1,149 @@
 // =====================================================
-// كافيه شغف - Connected to Supabase (Cloud Database)
+// كافيه شغف - Supabase + Cart + Settings + Search
 // =====================================================
 
-// ========== 1. SUPABASE CONFIG ==========
-// استبدل القيم التالية بمفاتيح مشروعك من لوحة Supabase
-// Settings → API → Project URL + anon public key
 const SUPABASE_URL = 'https://opvjcjohxcgagyzxtemh.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_KaWJM5urxHkjbg6tI6xB6w_n6c8--gk';
 
-// إنشاء عميل Supabase
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ========== 2. STATE ==========
-let categories = [];   // من جدول categories
-let items = [];        // من جدول items
+// ===== State =====
+let categories = [];
+let items = [];
+let settings = { whatsapp: '', facebook: '', instagram: '' };
+let cart = JSON.parse(localStorage.getItem('shaghaf_cart') || '{}');
 let isAdmin = false;
+let activeCategory = 'all';
+let searchQuery = '';
 const ADMIN_PASSWORD = 'shaghaf2024';
 
-// ========== 3. INIT ==========
+// ===== Init =====
 document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
   checkAdminSession();
-  await loadMenuFromSupabase();
+  await loadAll();
 });
 
-// ========== 4. FETCH FROM SUPABASE ==========
-async function loadMenuFromSupabase() {
+async function loadAll() {
   const loadingEl = document.getElementById('loadingState');
-  const menuEl = document.getElementById('menuContainer');
-
+  const menuEl = document.getElementById('menuArea');
   try {
-    // جلب الأقسام مرتبة
-    const { data: cats, error: catError } = await sb
-      .from('categories')
-      .select('*')
-      .order('sort_order', { ascending: true });
+    const [catsRes, itemsRes, settingsRes] = await Promise.all([
+      sb.from('categories').select('*').order('sort_order', { ascending: true }),
+      sb.from('items').select('*').order('sort_order', { ascending: true }),
+      sb.from('settings').select('*').eq('id', 1).maybeSingle()
+    ]);
 
-    if (catError) throw catError;
+    if (catsRes.error) throw catsRes.error;
+    if (itemsRes.error) throw itemsRes.error;
 
-    // جلب الأصناف مرتبة
-    const { data: prods, error: itemError } = await sb
-      .from('items')
-      .select('*')
-      .order('sort_order', { ascending: true });
+    categories = catsRes.data || [];
+    items = itemsRes.data || [];
+    if (settingsRes.data) {
+      settings = {
+        whatsapp: settingsRes.data.whatsapp || '',
+        facebook: settingsRes.data.facebook || '',
+        instagram: settingsRes.data.instagram || ''
+      };
+    }
 
-    if (itemError) throw itemError;
-
-    categories = cats || [];
-    items = prods || [];
-
+    renderCategoryPills();
     renderMenu();
+    renderFooter();
+    updateCartBar();
     loadingEl.style.display = 'none';
     menuEl.style.display = 'block';
   } catch (err) {
-    console.error('Error loading menu:', err);
+    console.error(err);
     loadingEl.innerHTML = `
       <p style="color:#C62828;font-weight:700;">حدث خطأ أثناء تحميل القائمة</p>
-      <p style="color:var(--gray-600);font-size:0.9rem;margin-top:8px;">تأكد من إعداد مفاتيح Supabase بشكل صحيح</p>
-      <button class="btn-primary" style="margin-top:16px;" onclick="location.reload()">إعادة المحاولة</button>
+      <p style="color:var(--gray-600);font-size:0.9rem;margin-top:8px;">${err.message || ''}</p>
+      <button class="btn-submit" style="margin-top:16px;max-width:200px;margin:16px auto 0;display:block;" onclick="location.reload()">إعادة المحاولة</button>
     `;
   }
 }
 
-// ========== 5. RENDER ==========
-function renderMenu() {
-  const container = document.getElementById('menuContainer');
-  container.innerHTML = '';
+// ===== Category Pills =====
+function renderCategoryPills() {
+  const el = document.getElementById('catPills');
+  let html = `<button class="cat-btn ${activeCategory === 'all' ? 'active' : ''}" data-cat="all" onclick="filterCategory('all')">الكل</button>`;
+  categories.forEach(c => {
+    html += `<button class="cat-btn ${activeCategory === c.id ? 'active' : ''}" data-cat="${c.id}" onclick="filterCategory('${c.id}')">${escapeHtml(c.name)}</button>`;
+  });
+  el.innerHTML = html;
+}
 
-  if (categories.length === 0) {
-    container.innerHTML = `
-      <div class="container" style="text-align:center;padding:60px 20px;">
-        <p style="color:var(--gray-600);">لا توجد أقسام بعد. سجّل كمسؤول وأضف بيانات.</p>
-      </div>`;
-    return;
-  }
+function filterCategory(catId) {
+  activeCategory = catId;
+  searchQuery = '';
+  document.getElementById('searchInput').value = '';
+  renderCategoryPills();
+  renderMenu();
+  document.getElementById('menuArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
-  categories.forEach(cat => {
-    const catItems = items.filter(i => i.category_id === cat.id);
+// ===== Event Listeners =====
+function setupEventListeners() {
+  window.addEventListener('scroll', () => {
+    document.getElementById('header').classList.toggle('scrolled', window.scrollY > 40);
+  });
 
-    const sectionEl = document.createElement('section');
-    sectionEl.className = 'menu-section';
-    sectionEl.id = cat.slug;
+  document.getElementById('adminBtn').addEventListener('click', openAdminModal);
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('adminModal').addEventListener('click', e => {
+    if (e.target.id === 'adminModal') closeModal();
+  });
 
-    sectionEl.innerHTML = `
-      <div class="container">
-        <div class="section-header">
-          <span class="section-badge">${escapeHtml(cat.badge || '')}</span>
-          <h2 class="section-title">${escapeHtml(cat.name)}</h2>
-          <p class="section-desc">${escapeHtml(cat.description || '')}</p>
-        </div>
-        <div class="menu-grid">
-          ${catItems.map(item => renderCard(item, cat.id)).join('')}
-          <button class="add-item-btn" onclick="openAddItem('${cat.id}')">
-            ➕ إضافة صنف جديد
-          </button>
-        </div>
-      </div>
-    `;
-    container.appendChild(sectionEl);
+  document.getElementById('openCartBtn').addEventListener('click', openCart);
+  document.getElementById('closeCartModal').addEventListener('click', closeCart);
+  document.getElementById('cartModal').addEventListener('click', e => {
+    if (e.target.id === 'cartModal') closeCart();
+  });
+
+  document.getElementById('searchInput').addEventListener('input', e => {
+    searchQuery = e.target.value.trim().toLowerCase();
+    activeCategory = 'all';
+    renderCategoryPills();
+    renderMenu();
   });
 }
 
-function renderCard(item, categoryId) {
+// ===== Render Menu =====
+function renderMenu() {
+  const grid = document.getElementById('menuGrid');
+  const titleEl = document.getElementById('currentCatTitle');
+  const noRes = document.getElementById('noResults');
+
+  let filtered = items;
+
+  if (activeCategory !== 'all') {
+    filtered = filtered.filter(i => i.category_id === activeCategory);
+    const cat = categories.find(c => c.id === activeCategory);
+    titleEl.textContent = cat ? cat.name : 'الأصناف';
+  } else {
+    titleEl.textContent = searchQuery ? 'نتائج البحث: "' + searchQuery + '"' : 'كل الأصناف';
+  }
+
+  if (searchQuery) {
+    filtered = filtered.filter(i =>
+      (i.name || '').toLowerCase().includes(searchQuery) ||
+      (i.description || '').toLowerCase().includes(searchQuery)
+    );
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    noRes.style.display = 'block';
+    return;
+  }
+
+  noRes.style.display = 'none';
+  grid.innerHTML = filtered.map(item => renderCard(item)).join('');
+}
+
+function renderCard(item) {
+  const qty = cart[item.id] || 0;
   return `
     <div class="product-card" data-id="${item.id}">
       <div class="admin-controls">
@@ -112,42 +153,166 @@ function renderCard(item, categoryId) {
       <div class="product-img-wrap">
         <img class="product-img" src="${escapeHtml(item.image_url || '')}" alt="${escapeHtml(item.name)}" loading="lazy"
              onerror="this.src='https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&h=400&fit=crop'">
+        <span class="product-price-badge">${item.price} ر.س</span>
       </div>
       <div class="product-body">
         <h3 class="product-name">${escapeHtml(item.name)}</h3>
         <p class="product-desc">${escapeHtml(item.description || '')}</p>
-        <div class="product-footer">
-          <span class="product-price">${item.price} <span>ر.س</span></span>
+        <div class="product-actions">
+          ${qty === 0
+            ? `<button class="btn-add" onclick="changeQty('${item.id}', 1)">+ إضافة</button>`
+            : `<div class="qty-controls">
+                <button class="qty-btn" onclick="changeQty('${item.id}', -1)">−</button>
+                <span class="qty-num">${qty}</span>
+                <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+              </div>`
+          }
         </div>
       </div>
     </div>
   `;
 }
 
-// ========== 6. EVENT LISTENERS ==========
-function setupEventListeners() {
-  window.addEventListener('scroll', () => {
-    document.getElementById('header').classList.toggle('scrolled', window.scrollY > 50);
-  });
-
-  document.getElementById('menuToggle').addEventListener('click', () => {
-    document.getElementById('nav').classList.toggle('open');
-  });
-
-  document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-      document.getElementById('nav').classList.remove('open');
-    });
-  });
-
-  document.getElementById('adminBtn').addEventListener('click', openAdminModal);
-  document.getElementById('closeModal').addEventListener('click', closeModal);
-  document.getElementById('adminModal').addEventListener('click', (e) => {
-    if (e.target.id === 'adminModal') closeModal();
-  });
+// ===== Cart =====
+function saveCart() {
+  localStorage.setItem('shaghaf_cart', JSON.stringify(cart));
+  updateCartBar();
+  renderMenu();
 }
 
-// ========== 7. ADMIN AUTH (Client-side password) ==========
+function changeQty(itemId, delta) {
+  const current = cart[itemId] || 0;
+  const next = current + delta;
+  if (next <= 0) {
+    delete cart[itemId];
+  } else {
+    cart[itemId] = next;
+  }
+  saveCart();
+}
+
+function updateCartBar() {
+  const bar = document.getElementById('cartBar');
+  const count = Object.values(cart).reduce((a, b) => a + b, 0);
+  const total = Object.entries(cart).reduce((sum, [id, qty]) => {
+    const item = items.find(i => i.id === id);
+    return sum + (item ? item.price * qty : 0);
+  }, 0);
+
+  if (count > 0) {
+    bar.style.display = 'block';
+    document.getElementById('cartCountBadge').textContent = count;
+    document.getElementById('cartTotalText').textContent = total.toFixed(0) + ' ر.س';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function openCart() {
+  const body = document.getElementById('cartBody');
+  const entries = Object.entries(cart);
+
+  if (entries.length === 0) {
+    body.innerHTML = `<div class="cart-empty"><p>السلة فارغة</p></div>`;
+  } else {
+    let html = '';
+    let total = 0;
+    entries.forEach(([id, qty]) => {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      const line = item.price * qty;
+      total += line;
+      html += `
+        <div class="cart-item">
+          <img class="cart-item-img" src="${escapeHtml(item.image_url || '')}" alt="">
+          <div class="cart-item-info">
+            <div class="cart-item-name">${escapeHtml(item.name)}</div>
+            <div class="cart-item-price">${item.price} ر.س × ${qty} = ${line} ر.س</div>
+          </div>
+          <div class="cart-item-qty">
+            <button class="qty-btn" onclick="changeQty('${id}', -1); openCart();">−</button>
+            <span class="qty-num">${qty}</span>
+            <button class="qty-btn" onclick="changeQty('${id}', 1); openCart();">+</button>
+          </div>
+        </div>
+      `;
+    });
+
+    const hasWhatsapp = settings.whatsapp && settings.whatsapp.trim();
+    html += `
+      <div class="cart-summary">
+        <div class="cart-summary-row">
+          <span>المجموع</span>
+          <span>${total.toFixed(0)} ر.س</span>
+        </div>
+        <button class="btn-whatsapp" onclick="sendWhatsAppOrder()" ${!hasWhatsapp ? 'disabled' : ''}>
+          ${hasWhatsapp ? '📱 إرسال الطلب عبر واتساب' : '⚠️ أضف رقم واتساب من لوحة التحكم'}
+        </button>
+        <button class="btn-clear-cart" onclick="clearCart()">تفريغ السلة</button>
+      </div>
+    `;
+    body.innerHTML = html;
+  }
+  document.getElementById('cartModal').classList.add('active');
+}
+
+function closeCart() {
+  document.getElementById('cartModal').classList.remove('active');
+}
+
+function clearCart() {
+  cart = {};
+  saveCart();
+  closeCart();
+  showToast('تم تفريغ السلة', 'success');
+}
+
+function sendWhatsAppOrder() {
+  if (!settings.whatsapp) {
+    showToast('رقم الواتساب غير مضاف', 'error');
+    return;
+  }
+  const entries = Object.entries(cart);
+  if (entries.length === 0) return;
+
+  let msg = 'مرحباً، أريد طلب التالي من كافيه شغف:\n\n';
+  let total = 0;
+  entries.forEach(([id, qty]) => {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+    const line = item.price * qty;
+    total += line;
+    msg += '• ' + item.name + ' × ' + qty + ' = ' + line + ' ر.س\n';
+  });
+  msg += '\nالمجموع: ' + total.toFixed(0) + ' ر.س';
+
+  let phone = settings.whatsapp.replace(/[^0-9]/g, '');
+  if (phone.startsWith('0')) phone = '966' + phone.slice(1);
+  window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+// ===== Footer =====
+function renderFooter() {
+  const socialEl = document.getElementById('footerSocial');
+  let html = '';
+  if (settings.facebook) {
+    html += '<a href="' + escapeHtml(settings.facebook) + '" target="_blank" rel="noopener">📘 فيسبوك</a>';
+  }
+  if (settings.instagram) {
+    html += '<a href="' + escapeHtml(settings.instagram) + '" target="_blank" rel="noopener">📷 إنستغرام</a>';
+  }
+  socialEl.innerHTML = html || '<span style="opacity:0.6">—</span>';
+
+  const waEl = document.getElementById('footerWhatsapp');
+  if (settings.whatsapp) {
+    let phone = settings.whatsapp.replace(/[^0-9]/g, '');
+    waEl.innerHTML = '📞 <a href="https://wa.me/' + phone + '" target="_blank" style="color:inherit;">' + escapeHtml(settings.whatsapp) + '</a>';
+  } else {
+    waEl.textContent = '📞 —';
+  }
+}
+
+// ===== Admin =====
 function checkAdminSession() {
   if (sessionStorage.getItem('shaghaf_admin') === 'true') {
     isAdmin = true;
@@ -165,13 +330,32 @@ function openAdminModal() {
       <div class="admin-panel">
         <div class="admin-status">
           <span>🟢</span>
-          <span>أنت مسجل كمسؤول — التعديلات تُحفظ مباشرة في السحابة وتظهر لكل الزوار</span>
+          <span>أنت مسجل كمسؤول — التعديلات تُحفظ في السحابة</span>
         </div>
-        <p style="color:var(--gray-600);font-size:0.95rem;">
-          انقر ✏️ لتعديل صنف أو 🗑️ لحذفه. أو أضف أصنافًا جديدة من كل قسم.
+
+        <div class="settings-section">
+          <h3>⚙️ إعدادات التواصل</h3>
+          <div class="form-group">
+            <label>رقم واتساب (مع كود الدولة)</label>
+            <input type="text" id="setWhatsapp" value="${escapeHtml(settings.whatsapp || '')}" placeholder="9665xxxxxxxx">
+          </div>
+          <div class="form-group">
+            <label>رابط فيسبوك</label>
+            <input type="url" id="setFacebook" value="${escapeHtml(settings.facebook || '')}" placeholder="https://facebook.com/...">
+          </div>
+          <div class="form-group">
+            <label>رابط إنستغرام</label>
+            <input type="url" id="setInstagram" value="${escapeHtml(settings.instagram || '')}" placeholder="https://instagram.com/...">
+          </div>
+          <button class="btn-submit" onclick="saveSettings()">حفظ الإعدادات</button>
+        </div>
+
+        <p style="color:var(--gray-600);font-size:0.9rem;">
+          لتعديل صنف: اضغط ✏️ على الكارت. لإضافة صنف جديد استخدم الزر أدناه.
         </p>
         <div class="admin-actions">
           <button class="btn-secondary" onclick="seedDefaultData()">تعبئة البيانات الافتراضية</button>
+          <button class="btn-secondary" onclick="openAddItemPicker()">➕ إضافة صنف جديد</button>
           <button class="btn-secondary" onclick="logoutAdmin()" style="background:#FFEBEE;color:#C62828;">تسجيل الخروج</button>
         </div>
       </div>
@@ -219,9 +403,28 @@ function logoutAdmin() {
   showToast('تم تسجيل الخروج', 'success');
 }
 
-// ========== 8. CRUD OPERATIONS (Supabase) ==========
+async function saveSettings() {
+  const whatsapp = document.getElementById('setWhatsapp').value.trim();
+  const facebook = document.getElementById('setFacebook').value.trim();
+  const instagram = document.getElementById('setInstagram').value.trim();
 
-// --- Edit Item ---
+  try {
+    const { error } = await sb
+      .from('settings')
+      .upsert({ id: 1, whatsapp, facebook, instagram, updated_at: new Date().toISOString() });
+
+    if (error) throw error;
+
+    settings = { whatsapp, facebook, instagram };
+    renderFooter();
+    showToast('تم حفظ الإعدادات ✓', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('فشل الحفظ: ' + (err.message || ''), 'error');
+  }
+}
+
+// ===== CRUD Items =====
 function openEditItem(itemId) {
   const item = items.find(i => i.id === itemId);
   if (!item) return;
@@ -232,7 +435,7 @@ function openEditItem(itemId) {
 
   body.innerHTML = `
     <form class="edit-form" onsubmit="saveEditItem(event, '${itemId}')">
-      <h3 style="color:var(--blue-900);margin-bottom:8px;">تعديل الصنف</h3>
+      <h3 style="color:var(--blue-900);margin-bottom:12px;">تعديل الصنف</h3>
       <div class="form-group">
         <label>اسم الصنف</label>
         <input type="text" id="editName" value="${escapeHtml(item.name)}" required>
@@ -272,22 +475,38 @@ async function saveEditItem(e, itemId) {
 
     if (error) throw error;
 
-    // تحديث محلي
     const idx = items.findIndex(i => i.id === itemId);
-    if (idx !== -1) {
-      items[idx] = { ...items[idx], name, description, price, image_url };
-    }
+    if (idx !== -1) items[idx] = { ...items[idx], name, description, price, image_url };
 
     renderMenu();
     closeModal();
     showToast('تم التحديث بنجاح ✓', 'success');
   } catch (err) {
     console.error(err);
-    showToast('فشل التحديث: ' + (err.message || 'خطأ غير معروف'), 'error');
+    showToast('فشل التحديث: ' + (err.message || ''), 'error');
   }
 }
 
-// --- Add Item ---
+function openAddItemPicker() {
+  if (categories.length === 0) {
+    showToast('أضف أقسام أولاً عبر تعبئة البيانات', 'error');
+    return;
+  }
+  const modal = document.getElementById('adminModal');
+  const body = document.getElementById('adminBody');
+  modal.classList.add('active');
+
+  let options = categories.map(c =>
+    '<button class="btn-secondary" style="width:100%;margin-bottom:8px;text-align:right;" onclick="openAddItem(\'' + c.id + '\')">' + escapeHtml(c.name) + '</button>'
+  ).join('');
+
+  body.innerHTML = `
+    <h3 style="color:var(--blue-900);margin-bottom:12px;">اختر القسم</h3>
+    ${options}
+    <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openAdminModal()">رجوع</button>
+  `;
+}
+
 function openAddItem(categoryId) {
   const modal = document.getElementById('adminModal');
   const body = document.getElementById('adminBody');
@@ -295,14 +514,14 @@ function openAddItem(categoryId) {
 
   body.innerHTML = `
     <form class="edit-form" onsubmit="saveNewItem(event, '${categoryId}')">
-      <h3 style="color:var(--blue-900);margin-bottom:8px;">إضافة صنف جديد</h3>
+      <h3 style="color:var(--blue-900);margin-bottom:12px;">إضافة صنف جديد</h3>
       <div class="form-group">
         <label>اسم الصنف</label>
         <input type="text" id="editName" placeholder="مثال: كيك الشوكولاتة" required>
       </div>
       <div class="form-group">
         <label>الوصف</label>
-        <textarea id="editDesc" rows="2" placeholder="وصف قصير للصنف" required></textarea>
+        <textarea id="editDesc" rows="2" placeholder="وصف قصير" required></textarea>
       </div>
       <div class="form-group">
         <label>السعر (ر.س)</label>
@@ -310,7 +529,7 @@ function openAddItem(categoryId) {
       </div>
       <div class="form-group">
         <label>رابط الصورة</label>
-        <input type="url" id="editImage" placeholder="https://images.unsplash.com/..." required>
+        <input type="url" id="editImage" placeholder="https://..." required>
       </div>
       <div style="display:flex;gap:10px;margin-top:8px;">
         <button type="submit" class="btn-submit" style="flex:1;">إضافة</button>
@@ -327,7 +546,6 @@ async function saveNewItem(e, categoryId) {
   const price = Number(document.getElementById('editPrice').value);
   const image_url = document.getElementById('editImage').value.trim();
 
-  // حساب ترتيب جديد
   const catItems = items.filter(i => i.category_id === categoryId);
   const sort_order = catItems.length > 0 ? Math.max(...catItems.map(i => i.sort_order || 0)) + 1 : 1;
 
@@ -346,32 +564,29 @@ async function saveNewItem(e, categoryId) {
     showToast('تمت الإضافة بنجاح ✓', 'success');
   } catch (err) {
     console.error(err);
-    showToast('فشل الإضافة: ' + (err.message || 'خطأ غير معروف'), 'error');
+    showToast('فشل الإضافة: ' + (err.message || ''), 'error');
   }
 }
 
-// --- Delete Item ---
 async function deleteItem(itemId) {
   if (!confirm('هل أنت متأكد من حذف هذا الصنف؟')) return;
 
   try {
-    const { error } = await sb
-      .from('items')
-      .delete()
-      .eq('id', itemId);
-
+    const { error } = await sb.from('items').delete().eq('id', itemId);
     if (error) throw error;
 
     items = items.filter(i => i.id !== itemId);
+    delete cart[itemId];
+    saveCart();
     renderMenu();
     showToast('تم الحذف بنجاح', 'success');
   } catch (err) {
     console.error(err);
-    showToast('فشل الحذف: ' + (err.message || 'خطأ غير معروف'), 'error');
+    showToast('فشل الحذف: ' + (err.message || ''), 'error');
   }
 }
 
-// ========== 9. SEED DEFAULT DATA (مرة واحدة) ==========
+// ===== Seed Default Data =====
 async function seedDefaultData() {
   if (!confirm('سيتم إضافة الأقسام والأصناف الافتراضية. هل تريد المتابعة؟')) return;
 
@@ -433,7 +648,6 @@ async function seedDefaultData() {
   try {
     showToast('جاري تعبئة البيانات...', '');
 
-    // إدخال الأقسام
     const { data: insertedCats, error: catErr } = await sb
       .from('categories')
       .upsert(defaultCategories, { onConflict: 'slug' })
@@ -441,30 +655,25 @@ async function seedDefaultData() {
 
     if (catErr) throw catErr;
 
-    // إدخال الأصناف
     for (const cat of insertedCats) {
       const catItems = defaultItemsMap[cat.slug] || [];
-      const itemsToInsert = catItems.map(item => ({
-        ...item,
-        category_id: cat.id
-      }));
-
+      const itemsToInsert = catItems.map(item => ({ ...item, category_id: cat.id }));
       if (itemsToInsert.length > 0) {
         const { error: itemErr } = await sb.from('items').insert(itemsToInsert);
         if (itemErr) throw itemErr;
       }
     }
 
-    await loadMenuFromSupabase();
+    await loadAll();
     closeModal();
     showToast('تم تعبئة البيانات بنجاح ✓', 'success');
   } catch (err) {
     console.error(err);
-    showToast('فشل التعبئة: ' + (err.message || 'خطأ'), 'error');
+    showToast('فشل التعبئة: ' + (err.message || ''), 'error');
   }
 }
 
-// ========== 10. HELPERS ==========
+// ===== Helpers =====
 function showToast(msg, type = '') {
   const toast = document.getElementById('toast');
   toast.textContent = msg;
@@ -474,9 +683,9 @@ function showToast(msg, type = '') {
 
 function escapeHtml(str) {
   return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
+    .replace(/&/g, '&')
+    .replace(/"/g, '"')
     .replace(/'/g, '&#39;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/</g, '<')
+    .replace(/>/g, '>');
 }
