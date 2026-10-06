@@ -1,5 +1,10 @@
-/* Dual currency: SYP + TRY */
+/* Dual currency + safety: remove seed button */
 (function(){
+  // Safety: disable seed immediately
+  window.seedDefaultData = function(){
+    if(typeof showToast==='function') showToast('\u062a\u0645 \u062a\u0639\u0637\u064a\u0644 \u062a\u0639\u0628\u0626\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0629','error');
+  };
+
   function getItemPrices(item){
     if(!item) return {syp:0, try:0};
     var syp = Number(item.price_syp != null ? item.price_syp : item.price) || 0;
@@ -173,6 +178,26 @@
         return _sni(e, categoryId);
       };
       window.saveNewItem._dualPatched = true;
+    }
+
+    // Remove seed button from admin panel
+    window.seedDefaultData = function(){
+      if(typeof showToast==='function') showToast('\u062a\u0645 \u062a\u0639\u0637\u064a\u0644 \u062a\u0639\u0628\u0626\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0629','error');
+    };
+    if(typeof renderAdminPanel === 'function' && !renderAdminPanel._seedRemoved){
+      var _rap = renderAdminPanel;
+      window.renderAdminPanel = function(){
+        _rap();
+        var body = document.getElementById('adminBody');
+        if(!body) return;
+        body.querySelectorAll('button').forEach(function(btn){
+          var t = (btn.textContent||'').trim();
+          if(t.indexOf('\u062a\u0639\u0628\u0626\u0629') !== -1 || (btn.getAttribute('onclick')||'').indexOf('seedDefaultData') !== -1){
+            btn.remove();
+          }
+        });
+      };
+      window.renderAdminPanel._seedRemoved = true;
     }
 
     if(typeof renderMenu === 'function'){ try { renderMenu(); } catch(e){} }
