@@ -1,8 +1,7 @@
-/* Dual currency + safety: remove seed button */
+/* Dual currency + admin menu + safety */
 (function(){
-  // Safety: disable seed immediately
   window.seedDefaultData = function(){
-    if(typeof showToast==='function') showToast('\u062a\u0645 \u062a\u0639\u0637\u064a\u0644 \u062a\u0639\u0628\u0626\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0629','error');
+    if(typeof showToast==='function') showToast('\u062a\u0645 \u062a\u0639\u0637\u064a\u0644 \u062a\u0639\u0628\u0626\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a','error');
   };
 
   function getItemPrices(item){
@@ -25,6 +24,22 @@
   window.getItemPrices = getItemPrices;
   window.formatPrices = formatPrices;
 
+  window.toggleAdminMenu = function(btn){
+    var dd = btn.nextElementSibling;
+    var wasOpen = dd && dd.classList.contains('open');
+    closeAllAdminMenus();
+    if(dd && !wasOpen) dd.classList.add('open');
+  };
+  window.closeAllAdminMenus = function(){
+    document.querySelectorAll('.admin-dropdown.open').forEach(function(el){
+      el.classList.remove('open');
+    });
+  };
+  if(!window._adminMenuClickBound){
+    document.addEventListener('click', function(){ closeAllAdminMenus(); });
+    window._adminMenuClickBound = true;
+  }
+
   function installPatches(){
     if(typeof renderCard !== 'function') return false;
     if(renderCard._dualPatched) return true;
@@ -33,6 +48,24 @@
     window.renderCard = function(item){
       var html = _renderCard(item);
       html = html.replace(/(<span class="product-price-badge">)[^<]+(<\/span>)/, '$1'+formatPrices(item)+'$2');
+      var id = item.id;
+      var menuHtml =
+        '<div class="admin-controls">' +
+          '<button type="button" class="admin-menu-btn" onclick="event.stopPropagation();toggleAdminMenu(this)" aria-label="options">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>' +
+          '</button>' +
+          '<div class="admin-dropdown">' +
+            '<button type="button" onclick="event.stopPropagation();closeAllAdminMenus();openEditItem(\''+id+'\')">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
+              '\u062a\u0639\u062f\u064a\u0644' +
+            '</button>' +
+            '<button type="button" class="danger" onclick="event.stopPropagation();closeAllAdminMenus();deleteItem(\''+id+'\')">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>' +
+              '\u062d\u0630\u0641' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+      html = html.replace(/<div class="admin-controls">[\s\S]*?<\/div>/, menuHtml);
       return html;
     };
     window.renderCard._dualPatched = true;
@@ -180,10 +213,6 @@
       window.saveNewItem._dualPatched = true;
     }
 
-    // Remove seed button from admin panel
-    window.seedDefaultData = function(){
-      if(typeof showToast==='function') showToast('\u062a\u0645 \u062a\u0639\u0637\u064a\u0644 \u062a\u0639\u0628\u0626\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0629','error');
-    };
     if(typeof renderAdminPanel === 'function' && !renderAdminPanel._seedRemoved){
       var _rap = renderAdminPanel;
       window.renderAdminPanel = function(){
