@@ -1,4 +1,4 @@
-/* Brand: hide title, hero cover image, dual prices, persistent branding */
+/* Brand + hide items + dual prices + hero cover */
 (function(){
   var BRAND_KEY = 'shaghaf_brand_v1';
 
@@ -140,12 +140,12 @@
     block.innerHTML =
       '<h3 style="margin:16px 0 12px;color:#134E4A">\u0627\u0633\u0645 \u0627\u0644\u0645\u0648\u0642\u0639 \u0648\u0627\u0644\u0648\u0627\u062c\u0647\u0629</h3>'+
       '<div class="form-group"><label>\u0627\u0633\u0645 \u0627\u0644\u0645\u0648\u0642\u0639</label><input type="text" id="setSiteName" value="'+escapeHtmlSafe(b.site_name)+'" placeholder="\u0634\u063a\u0641"></div>'+
-      '<div class="form-group"><label>\u0648\u0635\u0641 \u0623\u0639\u0644\u0649 \u0627\u0644\u0645\u0648\u0642\u0639 (\u0641\u0627\u0631\u063a = \u0625\u062e\u0641\u0627\u0621)</label><textarea id="setHeroSubtitle" rows="2">'+escapeHtmlSafe(b.hero_subtitle||'')+'</textarea></div>'+
-      '<div class="form-group"><label>\u0635\u0648\u0631\u0629 \u0627\u0644\u063a\u0644\u0627\u0641 (\u0623\u0639\u0644\u0649 \u0627\u0644\u0645\u0648\u0642\u0639)</label>'+
+      '<div class="form-group"><label>\u0648\u0635\u0641 \u0623\u0639\u0644\u0649 \u0627\u0644\u0645\u0648\u0642\u0639</label><textarea id="setHeroSubtitle" rows="2">'+escapeHtmlSafe(b.hero_subtitle||'')+'</textarea></div>'+
+      '<div class="form-group"><label>\u0635\u0648\u0631\u0629 \u0627\u0644\u063a\u0644\u0627\u0641</label>'+
         (b.hero_image_url ? '<img class="upload-preview" id="heroCoverPreview" src="'+escapeHtmlSafe(b.hero_image_url)+'" style="width:100%;max-height:140px;object-fit:cover;border-radius:12px;margin:8px 0;">' : '<img class="upload-preview" id="heroCoverPreview" style="display:none;width:100%;max-height:140px;object-fit:cover;border-radius:12px;margin:8px 0;">')+
-        '<input type="url" id="setHeroImageUrl" value="'+escapeHtmlSafe(b.hero_image_url||'')+'" placeholder="\u0631\u0627\u0628\u0637 \u0627\u0644\u0635\u0648\u0631\u0629">'+
-        '<button type="button" class="btn-upload" onclick="uploadHeroCover()">\u0631\u0641\u0639 \u0635\u0648\u0631\u0629 \u0627\u0644\u063a\u0644\u0627\u0641 \u0645\u0646 \u0627\u0644\u062c\u0647\u0627\u0632</button></div>'+
-      '<div class="form-group"><label><input type="checkbox" id="setShowLogoIcon" '+(b.show_logo_icon?'checked':'')+'> \u0625\u0638\u0647\u0627\u0631 \u0623\u064a\u0642\u0648\u0646\u0629/\u0633\u062a\u064a\u0643\u0631</label></div>'+
+        '<input type="url" id="setHeroImageUrl" value="'+escapeHtmlSafe(b.hero_image_url||'')+'" placeholder="\u0631\u0627\u0628\u0637">'+
+        '<button type="button" class="btn-upload" onclick="uploadHeroCover()">\u0631\u0641\u0639 \u0635\u0648\u0631\u0629 \u0627\u0644\u063a\u0644\u0627\u0641</button></div>'+
+      '<div class="form-group"><label><input type="checkbox" id="setShowLogoIcon" '+(b.show_logo_icon?'checked':'')+'> \u0625\u0638\u0647\u0627\u0631 \u0623\u064a\u0642\u0648\u0646\u0629</label></div>'+
       '<button type="button" class="btn-submit" onclick="saveSiteBranding()">\u062d\u0641\u0638 \u0627\u0644\u0647\u0648\u064a\u0629</button>';
     el.appendChild(block);
   }
@@ -203,12 +203,35 @@
         if(field) field.value = url;
         var prev = document.getElementById('heroCoverPreview');
         if(prev){ prev.src = url; prev.style.display = 'block'; }
-        if(typeof showToast==='function') showToast('\u062a\u0645 \u0627\u0644\u0631\u0641\u0639 \u2014 \u0627\u0636\u063a\u0637 \u062d\u0641\u0638 \u0627\u0644\u0647\u0648\u064a\u0629','success');
+        if(typeof showToast==='function') showToast('\u062a\u0645 \u0627\u0644\u0631\u0641\u0639 \u2014 \u0627\u062d\u0641\u0638','success');
       }catch(err){
         if(typeof showToast==='function') showToast('\u0641\u0634\u0644: '+(err.message||''),'error');
       }
     };
     input.click();
+  };
+
+  function isItemHidden(item){
+    if(!item) return false;
+    return item.is_hidden === true || item.is_hidden === 'true' || item.is_hidden === 1;
+  }
+  window.isItemHidden = isItemHidden;
+
+  window.toggleHideItem = async function(itemId){
+    var item = items.find(function(i){ return i.id === itemId; });
+    if(!item) return;
+    var next = !isItemHidden(item);
+    try{
+      var res = await sb.from('items').update({ is_hidden: next }).eq('id', itemId);
+      if(res.error) throw res.error;
+      item.is_hidden = next;
+      var idx = items.findIndex(function(i){ return i.id === itemId; });
+      if(idx !== -1) items[idx].is_hidden = next;
+      if(typeof renderMenu === 'function') renderMenu();
+      if(typeof showToast === 'function') showToast(next ? '\u062a\u0645 \u0625\u062e\u0641\u0627\u0621 \u0627\u0644\u0635\u0646\u0641 \u0639\u0646 \u0627\u0644\u0632\u0628\u0627\u0626\u0646' : '\u0627\u0644\u0635\u0646\u0641 \u0638\u0627\u0647\u0631 \u0644\u0644\u0632\u0628\u0627\u0626\u0646 \u0627\u0644\u0622\u0646', 'success');
+    }catch(err){
+      if(typeof showToast === 'function') showToast('\u0641\u0634\u0644: '+(err.message||'')+' \u2014 \u062a\u0623\u0643\u062f \u0645\u0646 \u0639\u0645\u0648\u062f is_hidden', 'error');
+    }
   };
 
   function installPatches(){
@@ -223,6 +246,8 @@
       html = html.replace(/(<h3 class="product-name">[\s\S]*?<\/h3>)/, '$1'+priceHtml);
       html = html.replace(/<div class="product-actions">[\s\S]*?<\/div>/g, '');
       var id = item.id;
+      var hidden = isItemHidden(item);
+      var hideLabel = hidden ? '\u0625\u0638\u0647\u0627\u0631 \u0644\u0644\u0632\u0628\u0627\u0626\u0646' : '\u0625\u062e\u0641\u0627\u0621 \u0639\u0646 \u0627\u0644\u0632\u0628\u0627\u0626\u0646';
       var menuHtml =
         '<div class="admin-controls">' +
           '<button type="button" class="admin-menu-btn" onclick="event.stopPropagation();toggleAdminMenu(this)">' +
@@ -230,12 +255,32 @@
           '</button>' +
           '<div class="admin-dropdown">' +
             '<button type="button" onclick="event.stopPropagation();closeAllAdminMenus();openEditItem(\''+id+'\')">\u062a\u0639\u062f\u064a\u0644</button>' +
+            '<button type="button" onclick="event.stopPropagation();closeAllAdminMenus();toggleHideItem(\''+id+'\')">'+hideLabel+'</button>' +
             '<button type="button" class="danger" onclick="event.stopPropagation();closeAllAdminMenus();deleteItem(\''+id+'\')">\u062d\u0630\u0641</button>' +
           '</div></div>';
       html = html.replace(/<div class="admin-controls">[\s\S]*?<\/div>/, menuHtml);
+      if(hidden){
+        html = html.replace('class="product-card"', 'class="product-card is-hidden"');
+        if(html.indexOf('hidden-badge') === -1){
+          html = html.replace('<div class="product-img-wrap">',
+            '<div class="product-img-wrap"><span class="hidden-badge">\u0645\u062e\u0641\u064a</span>');
+        }
+      }
       return html;
     };
     window.renderCard._dualPatched = true;
+
+    if(typeof renderMenu === 'function' && !renderMenu._hidePatched){
+      var _rm = renderMenu;
+      window.renderMenu = function(){
+        var _all = items;
+        if(typeof isAdmin === 'undefined' || !isAdmin){
+          items = _all.filter(function(i){ return !isItemHidden(i); });
+        }
+        try { _rm(); } finally { items = _all; }
+      };
+      window.renderMenu._hidePatched = true;
+    }
 
     if(typeof openEditItem === 'function' && !openEditItem._dualPatched){
       var _oei = openEditItem;
@@ -320,7 +365,7 @@
           var catItems = items.filter(function(i){return i.category_id===categoryId;});
           var sort_order = catItems.length ? Math.max.apply(null, catItems.map(function(i){return i.sort_order||0;}))+1 : 1;
           try{
-            var res = await sb.from('items').insert([{category_id:categoryId,name:name,description:description,price:price_syp,price_syp:price_syp,price_try:price_try,image_url:image_url,sort_order:sort_order}]).select().single();
+            var res = await sb.from('items').insert([{category_id:categoryId,name:name,description:description,price:price_syp,price_syp:price_syp,price_try:price_try,image_url:image_url,sort_order:sort_order,is_hidden:false}]).select().single();
             if(res.error) throw res.error;
             items.push(res.data);
             if(typeof renderMenu==='function') renderMenu();
