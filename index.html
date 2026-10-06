@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>كافيه شغف | Café Shaghaf</title>
-  <meta name="description" content="كافيه شغف - حلويات، كيك، بوظة، قهوات ساخنة وباردة، وعصائر طازجة">
+  <meta name="description" content="كافيه شغف">
   <link rel="icon" id="faviconLink" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -22,7 +20,6 @@
       </a>
     </div>
   </header>
-
   <section class="hero">
     <div class="hero-overlay"></div>
     <div class="container hero-content">
@@ -31,24 +28,16 @@
       <a href="#menuArea" class="btn-primary">استكشف القائمة</a>
     </div>
   </section>
-
   <div class="filter-bar" id="filterBar">
     <div class="container">
       <div class="search-wrap">
-        <input type="search" id="searchInput" placeholder="ابحث عن صنفك المفضل..." autocomplete="off">
+        <input type="search" id="searchInput" placeholder="ابحث..." autocomplete="off">
         <span class="search-icon">🔍</span>
       </div>
-      <div class="cat-pills" id="catPills">
-        <button class="cat-btn active" data-cat="all" onclick="filterCategory('all')">الكل</button>
-      </div>
+      <div class="cat-pills" id="catPills"></div>
     </div>
   </div>
-
-  <div id="loadingState" class="loading-state">
-    <div class="spinner"></div>
-    <p>جاري تحميل القائمة...</p>
-  </div>
-
+  <div id="loadingState" class="loading-state"><div class="spinner"></div><p>جاري التحميل...</p></div>
   <main id="menuArea" class="menu-area" style="display:none;">
     <div class="container">
       <h2 class="section-title-main" id="currentCatTitle">كل الأصناف</h2>
@@ -56,19 +45,17 @@
       <p id="noResults" class="no-results" style="display:none;">لا توجد نتائج</p>
     </div>
   </main>
-
   <footer class="footer">
     <div class="container">
       <div class="footer-brand-center">
-        <span class="logo-icon" id="footerLogoIcon">☕</span>
+        <span class="logo-icon">☕</span>
         <span class="logo-text">شغف</span>
-        <p id="footerDesc">نقدم لكم أفضل الحلويات والقهوة بكل حب وشغف</p>
+        <p id="footerDesc">نقدم لكم أفضل الحلويات والقهوة</p>
       </div>
       <div class="footer-social-icons" id="footerSocial"></div>
       <div id="secretArea" class="secret-tap"></div>
     </div>
   </footer>
-
   <div class="cart-bar" id="cartBar" style="display:none;">
     <div class="cart-bar-inner">
       <span class="cart-count-badge" id="cartCountBadge">0</span>
@@ -78,29 +65,21 @@
       </button>
     </div>
   </div>
-
   <div class="modal" id="cartModal">
-    <div class="modal-content cart-modal-content">
-      <div class="modal-header">
-        <h2>سلة الطلبات</h2>
-        <button class="modal-close" id="closeCartModal">&times;</button>
-      </div>
+    <div class="modal-content">
+      <div class="modal-header"><h2>سلة الطلبات</h2><button class="modal-close" id="closeCartModal">&times;</button></div>
       <div class="modal-body" id="cartBody"></div>
     </div>
   </div>
-
   <div class="modal" id="adminModal">
     <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="adminModalTitle">لوحة التحكم</h2>
-        <button class="modal-close" id="closeModal">&times;</button>
-      </div>
+      <div class="modal-header"><h2>لوحة التحكم</h2><button class="modal-close" id="closeModal">&times;</button></div>
       <div class="modal-body" id="adminBody"></div>
     </div>
   </div>
-
   <div class="toast" id="toast"></div>
   <input type="file" id="fileInput" accept="image/*" style="display:none;">
   <script src="https://cdn.jsdelivr.net/gh/uneu2bb/cafe-shaghaf@044d93363729772b858dc967573829b82cced470/app.js"></script>
+  <script src="currency.js"></script>
 </body>
 </html>
