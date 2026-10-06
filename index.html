@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>كافيه شغف | Café Shaghaf</title>
-  <meta name="description" content="كافيه شغف">
+  <meta name="description" content="كافيه شغف - حلويات وقهوة">
   <link rel="icon" id="faviconLink" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -31,13 +33,13 @@
   <div class="filter-bar" id="filterBar">
     <div class="container">
       <div class="search-wrap">
-        <input type="search" id="searchInput" placeholder="ابحث..." autocomplete="off">
+        <input type="search" id="searchInput" placeholder="ابحث عن صنفك المفضل..." autocomplete="off">
         <span class="search-icon">🔍</span>
       </div>
       <div class="cat-pills" id="catPills"></div>
     </div>
   </div>
-  <div id="loadingState" class="loading-state"><div class="spinner"></div><p>جاري التحميل...</p></div>
+  <div id="loadingState" class="loading-state"><div class="spinner"></div><p>جاري تحميل القائمة...</p></div>
   <main id="menuArea" class="menu-area" style="display:none;">
     <div class="container">
       <h2 class="section-title-main" id="currentCatTitle">كل الأصناف</h2>
