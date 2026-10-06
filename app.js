@@ -6,13 +6,13 @@ const STORAGE_BUCKET = 'site-images';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ===== State =====
 let categories = [];
 let items = [];
 let settings = {
   whatsapp: '', facebook: '', instagram: '',
   admin_password: 'shaghaf2024',
-  logo_url: '', favicon_url: ''
+  logo_url: '', favicon_url: '',
+  footer_text: ''
 };
 let cart = JSON.parse(localStorage.getItem('shaghaf_cart') || '{}');
 let isAdmin = false;
@@ -49,7 +49,8 @@ async function loadAll() {
         instagram: settingsRes.data.instagram || '',
         admin_password: settingsRes.data.admin_password || 'shaghaf2024',
         logo_url: settingsRes.data.logo_url || '',
-        favicon_url: settingsRes.data.favicon_url || ''
+        favicon_url: settingsRes.data.favicon_url || '',
+        footer_text: settingsRes.data.footer_text || ''
       };
     }
     applyBranding();
@@ -133,7 +134,7 @@ function renderMenu() {
   const grid = document.getElementById('menuGrid');
   const titleEl = document.getElementById('currentCatTitle');
   const noRes = document.getElementById('noResults');
-  let filtered = items;
+  let filtered = [...items].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
   if (activeCategory !== 'all') {
     filtered = filtered.filter(i => i.category_id === activeCategory);
     const cat = categories.find(c => c.id === activeCategory);
@@ -151,7 +152,9 @@ function renderMenu() {
 
 function renderCard(item) {
   const qty = cart[item.id] || 0;
-  return '<div class="product-card" data-id="'+item.id+'">'
+  const drag=isAdmin?' draggable="true" ondragstart="itemDragStart(event)" ondragover="itemDragOver(event)" ondrop="itemDrop(event)" ondragend="itemDragEnd(event)"':'';
+  return '<div class="product-card" data-id="'+item.id+'"'+drag+'>'
+    +'<div class="drag-handle-item"><span class="drag-handle">☰</span></div>'
     +'<div class="admin-controls">'
     +'<button class="admin-btn" onclick="openEditItem(\''+item.id+'\')">✏️</button>'
     +'<button class="admin-btn delete" onclick="deleteItem(\''+item.id+'\')">🗑️</button></div>'
@@ -221,14 +224,18 @@ function sendWhatsAppOrder(){
 }
 
 function renderFooter(){
+  const descEl=document.getElementById('footerDesc');
+  if(descEl) descEl.textContent=settings.footer_text||'';
   const socialEl=document.getElementById('footerSocial');
   let html='';
-  if(settings.facebook) html+='<a href="'+escapeHtml(settings.facebook)+'" target="_blank">📘 فيسبوك</a>';
-  if(settings.instagram) html+='<a href="'+escapeHtml(settings.instagram)+'" target="_blank">📷 إنستغرام</a>';
-  socialEl.innerHTML=html||'<span style="opacity:0.6">—</span>';
-  const waEl=document.getElementById('footerWhatsapp');
-  if(settings.whatsapp){ let p=settings.whatsapp.replace(/[^0-9]/g,''); waEl.innerHTML='📞 <a href="https://wa.me/'+p+'" target="_blank" style="color:inherit">'+escapeHtml(settings.whatsapp)+'</a>'; }
-  else waEl.textContent='📞 —';
+  if(settings.facebook) html+='<a class="fb" href="'+escapeHtml(settings.facebook)+'" target="_blank" rel="noopener" title="فيسبوك">f</a>';
+  if(settings.instagram) html+='<a class="ig" href="'+escapeHtml(settings.instagram)+'" target="_blank" rel="noopener" title="إنستغرام">📷</a>';
+  if(settings.whatsapp){
+    let phone=settings.whatsapp.replace(/[^0-9]/g,'');
+    if(phone.startsWith('0')) phone='966'+phone.slice(1);
+    html+='<a class="wa" href="https://wa.me/'+phone+'" target="_blank" rel="noopener" title="واتساب">💬</a>';
+  }
+  socialEl.innerHTML=html;
 }
 
 function checkAdminSession(){ if(sessionStorage.getItem('shaghaf_admin')==='true'){ isAdmin=true; document.body.classList.add('admin-mode'); } }
@@ -263,10 +270,9 @@ function renderAdminTabContent(){
   if(adminTab==='main'){
     el.innerHTML='<p style="color:var(--gray-600);font-size:0.9rem">اضغط ✏️ على أي صنف للتعديل. استخدم التبويبات لإدارة الأقسام والشعار وكلمة المرور.<br>💡 الدخول: اضغط اللوجو 5 مرات</p>';
   } else if(adminTab==='cats'){
-    let list=categories.map(c=>'<li class="cat-manage-item"><span class="cat-name">'+escapeHtml(c.name)+'</span><div class="cat-actions">'
-      +'<button onclick="moveCategory(\''+c.id+'\',-1)">⬆️</button><button onclick="moveCategory(\''+c.id+'\',1)">⬇️</button>'
+    let list=categories.map((c,i)=>'<li class="cat-manage-item" draggable="true" data-id="'+c.id+'" data-index="'+i+'" ondragstart="catDragStart(event)" ondragover="catDragOver(event)" ondrop="catDrop(event)" ondragend="catDragEnd(event)"><span class="drag-handle">☰</span><span class="cat-name">'+escapeHtml(c.name)+'</span><div class="cat-actions">'
       +'<button onclick="openEditCategory(\''+c.id+'\')">✏️</button><button class="danger" onclick="deleteCategory(\''+c.id+'\')">🗑️</button></div></li>').join('');
-    el.innerHTML='<h3 style="margin-bottom:12px;color:var(--blue-900)">إدارة الأقسام</h3><ul class="cat-manage-list">'+(list||'<p>لا أقسام</p>')+'</ul><button class="btn-submit" style="margin-top:12px" onclick="openAddCategory()">➕ قسم جديد</button>';
+    el.innerHTML='<h3 style="margin-bottom:12px;color:var(--blue-900)">إدارة الأقسام</h3><p style="font-size:0.85rem;color:var(--gray-600);margin-bottom:8px">اسحب ☰ للترتيب</p><ul class="cat-manage-list">'+(list||'<p>لا أقسام</p>')+'</ul><button class="btn-submit" style="margin-top:12px" onclick="openAddCategory()">➕ قسم جديد</button>';
   } else if(adminTab==='brand'){
     el.innerHTML='<h3 style="margin-bottom:12px;color:var(--blue-900)">الشعار</h3>'
       +'<div class="form-group"><label>لوجو</label>'+(settings.logo_url?'<img class="upload-preview" src="'+escapeHtml(settings.logo_url)+'">':'')
@@ -277,7 +283,8 @@ function renderAdminTabContent(){
       +'<input type="url" id="setFaviconUrl" value="'+escapeHtml(settings.favicon_url||'')+'" placeholder="أو رابط" style="margin-top:8px"></div>'
       +'<button class="btn-submit" onclick="saveBranding()">حفظ الشعار</button>';
   } else if(adminTab==='contact'){
-    el.innerHTML='<h3 style="margin-bottom:12px;color:var(--blue-900)">التواصل</h3>'
+    el.innerHTML='<h3 style="margin-bottom:12px;color:var(--blue-900)">التواصل والتذييل</h3>'
+      +'<div class="form-group"><label>وصف أسفل الموقع</label><textarea id="setFooterText" rows="2">'+escapeHtml(settings.footer_text||'')+'</textarea></div>'
       +'<div class="form-group"><label>واتساب</label><input type="text" id="setWhatsapp" value="'+escapeHtml(settings.whatsapp||'')+'" placeholder="9665xxxxxxxx"></div>'
       +'<div class="form-group"><label>فيسبوك</label><input type="url" id="setFacebook" value="'+escapeHtml(settings.facebook||'')+'"></div>'
       +'<div class="form-group"><label>إنستغرام</label><input type="url" id="setInstagram" value="'+escapeHtml(settings.instagram||'')+'"></div>'
@@ -288,14 +295,18 @@ function renderAdminTabContent(){
       +'<div class="form-group"><label>الجديدة</label><input type="password" id="newPass" minlength="4"></div>'
       +'<div class="form-group"><label>تأكيد</label><input type="password" id="newPass2" minlength="4"></div>'
       +'<button class="btn-submit" onclick="changePassword()">تغيير</button>'
-      +'<p style="font-size:0.8rem;color:var(--gray-600);margin-top:12px">💡 الدخول: اضغط اللوجو 5 مرات بسرعة</p>';
+      +'<p style="font-size:0.8rem;color:var(--gray-600);margin-top:12px">💡 الدخول: اضغط اللوجو 5 مرات بسرعة<br>كلمة المرور تُحفظ في السحابة وتتطبق فوراً على الجميع</p>';
   }
 }
 
 function closeModal(){ document.getElementById('adminModal').classList.remove('active'); }
-function loginAdmin(e){
+async function loginAdmin(e){
   e.preventDefault();
-  if(document.getElementById('adminPass').value===settings.admin_password){
+  const pass=document.getElementById('adminPass').value;
+  try{ const {data}=await sb.from('settings').select('admin_password').eq('id',1).maybeSingle();
+    if(data&&data.admin_password) settings.admin_password=data.admin_password;
+  }catch(_){}
+  if(pass===settings.admin_password){
     isAdmin=true; sessionStorage.setItem('shaghaf_admin','true'); document.body.classList.add('admin-mode');
     showToast('تم الدخول','success'); openAdminModal();
   } else showToast('كلمة مرور خاطئة','error');
@@ -310,7 +321,7 @@ async function changePassword(){
   try{
     const {error}=await sb.from('settings').upsert({id:1,admin_password:newP,updated_at:new Date().toISOString()});
     if(error)throw error;
-    settings.admin_password=newP; showToast('تم التغيير ✓','success');
+    settings.admin_password=newP; showToast('تم التغيير ✓ — تطبق فوراً على الجميع','success');
   }catch(err){ showToast('فشل: '+(err.message||''),'error'); }
 }
 
@@ -318,10 +329,12 @@ async function saveSettings(){
   const whatsapp=document.getElementById('setWhatsapp').value.trim();
   const facebook=document.getElementById('setFacebook').value.trim();
   const instagram=document.getElementById('setInstagram').value.trim();
+  const footerEl=document.getElementById('setFooterText');
+  const footer_text=footerEl?footerEl.value.trim():(settings.footer_text||'');
   try{
-    const {error}=await sb.from('settings').upsert({id:1,whatsapp,facebook,instagram,updated_at:new Date().toISOString()});
+    const {error}=await sb.from('settings').upsert({id:1,whatsapp,facebook,instagram,footer_text,updated_at:new Date().toISOString()});
     if(error)throw error;
-    settings.whatsapp=whatsapp; settings.facebook=facebook; settings.instagram=instagram;
+    settings.whatsapp=whatsapp; settings.facebook=facebook; settings.instagram=instagram; settings.footer_text=footer_text;
     renderFooter(); showToast('تم الحفظ ✓','success');
   }catch(err){ showToast('فشل: '+(err.message||''),'error'); }
 }
@@ -394,17 +407,6 @@ async function saveEditCategory(e,catId){
     renderCategoryPills(); renderMenu(); showToast('تم ✓','success'); switchAdminTab('cats');
   }catch(err){ showToast('فشل: '+(err.message||''),'error'); }
 }
-async function moveCategory(catId,direction){
-  const idx=categories.findIndex(c=>c.id===catId); if(idx===-1)return;
-  const newIdx=idx+direction; if(newIdx<0||newIdx>=categories.length)return;
-  const a=categories[idx], b=categories[newIdx];
-  const t=a.sort_order; a.sort_order=b.sort_order; b.sort_order=t;
-  categories[idx]=b; categories[newIdx]=a;
-  try{
-    await Promise.all([sb.from('categories').update({sort_order:a.sort_order}).eq('id',a.id), sb.from('categories').update({sort_order:b.sort_order}).eq('id',b.id)]);
-    renderCategoryPills(); switchAdminTab('cats');
-  }catch(err){ showToast('فشل الترتيب','error'); }
-}
 async function deleteCategory(catId){
   const catItems=items.filter(i=>i.category_id===catId);
   if(catItems.length&&!confirm('القسم فيه '+catItems.length+' صنف. حذف الكل؟'))return;
@@ -414,6 +416,49 @@ async function deleteCategory(catId){
     const {error}=await sb.from('categories').delete().eq('id',catId); if(error)throw error;
     categories=categories.filter(c=>c.id!==catId); renderCategoryPills(); renderMenu(); showToast('تم الحذف','success'); switchAdminTab('cats');
   }catch(err){ showToast('فشل: '+(err.message||''),'error'); }
+}
+
+let catDragIdx=null;
+function catDragStart(e){ catDragIdx=Number(e.currentTarget.dataset.index); e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }
+function catDragOver(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; document.querySelectorAll('.cat-manage-item').forEach(el=>el.classList.remove('drag-over')); e.currentTarget.classList.add('drag-over'); }
+function catDragEnd(e){ e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.cat-manage-item').forEach(el=>el.classList.remove('drag-over')); }
+async function catDrop(e){
+  e.preventDefault();
+  const toIdx=Number(e.currentTarget.dataset.index);
+  document.querySelectorAll('.cat-manage-item').forEach(el=>el.classList.remove('drag-over','dragging'));
+  if(catDragIdx===null||catDragIdx===toIdx) return;
+  const item=categories.splice(catDragIdx,1)[0];
+  categories.splice(toIdx,0,item);
+  categories.forEach((c,i)=>{ c.sort_order=i+1; });
+  try{
+    await Promise.all(categories.map(c=>sb.from('categories').update({sort_order:c.sort_order}).eq('id',c.id)));
+    renderCategoryPills(); switchAdminTab('cats'); showToast('تم الترتيب ✓','success');
+  }catch(err){ showToast('فشل الترتيب','error'); }
+  catDragIdx=null;
+}
+let itemDragId=null;
+function itemDragStart(e){ if(!isAdmin)return; itemDragId=e.currentTarget.dataset.id; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }
+function itemDragOver(e){ if(!isAdmin||!itemDragId)return; e.preventDefault(); e.dataTransfer.dropEffect='move'; document.querySelectorAll('.product-card').forEach(el=>el.classList.remove('drag-over')); e.currentTarget.classList.add('drag-over'); }
+function itemDragEnd(e){ e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.product-card').forEach(el=>el.classList.remove('drag-over')); }
+async function itemDrop(e){
+  if(!isAdmin||!itemDragId)return;
+  e.preventDefault();
+  const toId=e.currentTarget.dataset.id;
+  document.querySelectorAll('.product-card').forEach(el=>el.classList.remove('drag-over','dragging'));
+  if(itemDragId===toId){ itemDragId=null; return; }
+  const fromItem=items.find(i=>i.id===itemDragId), toItem=items.find(i=>i.id===toId);
+  if(!fromItem||!toItem||fromItem.category_id!==toItem.category_id){ itemDragId=null; showToast('ترتيب داخل نفس القسم فقط','error'); return; }
+  let catItems=items.filter(i=>i.category_id===fromItem.category_id).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+  const fromIdx=catItems.findIndex(i=>i.id===itemDragId), toIdx=catItems.findIndex(i=>i.id===toId);
+  if(fromIdx<0||toIdx<0){ itemDragId=null; return; }
+  const [moved]=catItems.splice(fromIdx,1); catItems.splice(toIdx,0,moved);
+  catItems.forEach((it,i)=>{ it.sort_order=i+1; });
+  catItems.forEach(ci=>{ const idx=items.findIndex(i=>i.id===ci.id); if(idx!==-1) items[idx].sort_order=ci.sort_order; });
+  try{
+    await Promise.all(catItems.map(it=>sb.from('items').update({sort_order:it.sort_order}).eq('id',it.id)));
+    renderMenu(); showToast('تم ترتيب الأصناف ✓','success');
+  }catch(err){ showToast('فشل الترتيب','error'); }
+  itemDragId=null;
 }
 
 function openEditItem(itemId){
