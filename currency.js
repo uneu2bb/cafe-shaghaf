@@ -1,8 +1,16 @@
-/* Dual currency + admin menu + safety */
+/* Dual currency + UI: price under name, no cart, branding controls */
 (function(){
   window.seedDefaultData = function(){
     if(typeof showToast==='function') showToast('\u062a\u0645 \u062a\u0639\u0637\u064a\u0644 \u062a\u0639\u0628\u0626\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a','error');
   };
+  window.changeQty = function(){};
+  window.openCart = function(){};
+  window.updateCartBar = function(){
+    var bar = document.getElementById('cartBar');
+    if(bar) bar.style.display = 'none';
+  };
+  window.sendWhatsAppOrder = function(){};
+  window.clearCart = function(){};
 
   function getItemPrices(item){
     if(!item) return {syp:0, try:0};
@@ -31,14 +39,73 @@
     if(dd && !wasOpen) dd.classList.add('open');
   };
   window.closeAllAdminMenus = function(){
-    document.querySelectorAll('.admin-dropdown.open').forEach(function(el){
-      el.classList.remove('open');
-    });
+    document.querySelectorAll('.admin-dropdown.open').forEach(function(el){ el.classList.remove('open'); });
   };
   if(!window._adminMenuClickBound){
     document.addEventListener('click', function(){ closeAllAdminMenus(); });
     window._adminMenuClickBound = true;
   }
+
+  function applySiteBranding(){
+    if(typeof settings === 'undefined') return;
+    var name = settings.site_name || '\u0634\u063a\u0641';
+    var hero = settings.hero_subtitle || '';
+    var showIcon = settings.show_logo_icon !== false && settings.show_logo_icon !== 'false' && settings.show_logo_icon !== 0;
+    var siteNameEl = document.getElementById('siteNameText');
+    if(siteNameEl) siteNameEl.textContent = name;
+    var footerName = document.getElementById('footerNameText');
+    if(footerName) footerName.textContent = name;
+    var heroSpan = document.getElementById('heroNameSpan');
+    if(heroSpan) heroSpan.textContent = name;
+    var heroSub = document.getElementById('heroSubtitle');
+    if(heroSub && hero) heroSub.textContent = hero;
+    try { document.title = '\u0643\u0627\u0641\u064a\u0647 ' + name; } catch(e){}
+    var logoIcon = document.getElementById('logoIcon');
+    var footerIcon = document.getElementById('footerLogoIcon');
+    if(logoIcon) logoIcon.style.display = showIcon ? '' : 'none';
+    if(footerIcon) footerIcon.style.display = showIcon ? '' : 'none';
+  }
+  window.applySiteBranding = applySiteBranding;
+
+  function escapeHtmlSafe(str){
+    return String(str||'').replace(/&/g,'&').replace(/"/g,'"').replace(/'/g,'&#39;').replace(/</g,'<').replace(/>/g,'>');
+  }
+
+  function injectBrandingForm(el){
+    if(!el || el.querySelector('#setSiteName')) return;
+    var name = (settings && settings.site_name) || '\u0634\u063a\u0641';
+    var hero = (settings && settings.hero_subtitle) || (document.getElementById('heroSubtitle')||{}).textContent || '';
+    var showIcon = !(settings && (settings.show_logo_icon === false || settings.show_logo_icon === 'false'));
+    var block = document.createElement('div');
+    block.style.marginBottom = '16px';
+    block.innerHTML =
+      '<h3 style="margin:16px 0 12px;color:var(--blue-900)">\u0627\u0633\u0645 \u0627\u0644\u0645\u0648\u0642\u0639 \u0648\u0627\u0644\u0648\u0627\u062c\u0647\u0629</h3>'+
+      '<div class="form-group"><label>\u0627\u0633\u0645 \u0627\u0644\u0645\u0648\u0642\u0639</label><input type="text" id="setSiteName" value="'+escapeHtmlSafe(name)+'" placeholder="\u0634\u063a\u0641"></div>'+
+      '<div class="form-group"><label>\u0648\u0635\u0641 \u0623\u0639\u0644\u0649 \u0627\u0644\u0645\u0648\u0642\u0639 (\u062a\u062d\u062a \u0627\u0644\u063a\u0644\u0627\u0641)</label><textarea id="setHeroSubtitle" rows="2">'+escapeHtmlSafe(hero)+'</textarea></div>'+
+      '<div class="form-group"><label><input type="checkbox" id="setShowLogoIcon" '+(showIcon?'checked':'')+'> \u0625\u0638\u0647\u0627\u0631 \u0623\u064a\u0642\u0648\u0646\u0629/\u0633\u062a\u064a\u0643\u0631 \u0628\u062c\u0627\u0646\u0628 \u0627\u0644\u0627\u0633\u0645</label></div>'+
+      '<button type="button" class="btn-submit" onclick="saveSiteBranding()">\u062d\u0641\u0638 \u0627\u0644\u0647\u0648\u064a\u0629</button>';
+    el.appendChild(block);
+  }
+
+  window.saveSiteBranding = async function(){
+    var site_name = ((document.getElementById('setSiteName')||{}).value||'').trim() || '\u0634\u063a\u0641';
+    var hero_subtitle = ((document.getElementById('setHeroSubtitle')||{}).value||'').trim();
+    var show_logo_icon = !!(document.getElementById('setShowLogoIcon')||{}).checked;
+    try{
+      var res = await sb.from('settings').upsert({
+        id: 1, site_name: site_name, hero_subtitle: hero_subtitle,
+        show_logo_icon: show_logo_icon, updated_at: new Date().toISOString()
+      });
+      if(res.error) throw res.error;
+      settings.site_name = site_name;
+      settings.hero_subtitle = hero_subtitle;
+      settings.show_logo_icon = show_logo_icon;
+      applySiteBranding();
+      if(typeof showToast==='function') showToast('\u062a\u0645 \u062d\u0641\u0638 \u0627\u0644\u0647\u0648\u064a\u0629 \u2713','success');
+    }catch(err){
+      if(typeof showToast==='function') showToast('\u0641\u0634\u0644: '+(err.message||'')+' \u2014 \u062a\u0623\u0643\u062f \u0645\u0646 \u0623\u0639\u0645\u062f\u0629 SQL','error');
+    }
+  };
 
   function installPatches(){
     if(typeof renderCard !== 'function') return false;
@@ -47,7 +114,10 @@
     var _renderCard = renderCard;
     window.renderCard = function(item){
       var html = _renderCard(item);
-      html = html.replace(/(<span class="product-price-badge">)[^<]+(<\/span>)/, '$1'+formatPrices(item)+'$2');
+      html = html.replace(/<span class="product-price-badge">[\s\S]*?<\/span>/g, '');
+      var priceHtml = '<div class="product-price">'+formatPrices(item)+'</div>';
+      html = html.replace(/(<h3 class="product-name">[\s\S]*?<\/h3>)/, '$1'+priceHtml);
+      html = html.replace(/<div class="product-actions">[\s\S]*?<\/div>/g, '');
       var id = item.id;
       var menuHtml =
         '<div class="admin-controls">' +
@@ -56,48 +126,14 @@
           '</button>' +
           '<div class="admin-dropdown">' +
             '<button type="button" onclick="event.stopPropagation();closeAllAdminMenus();openEditItem(\''+id+'\')">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>' +
-              '\u062a\u0639\u062f\u064a\u0644' +
-            '</button>' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>\u062a\u0639\u062f\u064a\u0644</button>' +
             '<button type="button" class="danger" onclick="event.stopPropagation();closeAllAdminMenus();deleteItem(\''+id+'\')">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>' +
-              '\u062d\u0630\u0641' +
-            '</button>' +
-          '</div>' +
-        '</div>';
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>\u062d\u0630\u0641</button>' +
+          '</div></div>';
       html = html.replace(/<div class="admin-controls">[\s\S]*?<\/div>/, menuHtml);
       return html;
     };
     window.renderCard._dualPatched = true;
-
-    if(typeof updateCartBar === 'function' && !updateCartBar._dualPatched){
-      window.updateCartBar = function(){
-        var bar = document.getElementById('cartBar');
-        if(!bar || typeof cart==='undefined' || typeof items==='undefined') return;
-        var count = Object.values(cart).reduce(function(a,b){return a+b;},0);
-        var totalSyp=0, totalTry=0;
-        Object.keys(cart).forEach(function(id){
-          var item = items.find(function(i){return i.id===id;});
-          if(!item) return;
-          var p = getItemPrices(item);
-          totalSyp += p.syp * cart[id];
-          totalTry += p.try * cart[id];
-        });
-        if(count>0){
-          bar.style.display='block';
-          var badge = document.getElementById('cartCountBadge');
-          if(badge) badge.textContent = count;
-          var txt = [];
-          if(totalSyp>0) txt.push(fmt(totalSyp,'syp'));
-          if(totalTry>0) txt.push(fmt(totalTry,'try'));
-          var totalEl = document.getElementById('cartTotalText');
-          if(totalEl) totalEl.textContent = txt.join(' \u00b7 ') || '0';
-        } else {
-          bar.style.display='none';
-        }
-      };
-      window.updateCartBar._dualPatched = true;
-    }
 
     if(typeof openEditItem === 'function' && !openEditItem._dualPatched){
       var _oei = openEditItem;
@@ -134,25 +170,14 @@
           var price_try = Number(tryEl.value)||0;
           var image_url = document.getElementById('editImage').value.trim();
           try{
-            var res = await sb.from('items').update({
-              name:name, description:description,
-              price: price_syp, price_syp: price_syp, price_try: price_try,
-              image_url: image_url
-            }).eq('id', itemId);
+            var res = await sb.from('items').update({name:name,description:description,price:price_syp,price_syp:price_syp,price_try:price_try,image_url:image_url}).eq('id', itemId);
             if(res.error) throw res.error;
             var idx = items.findIndex(function(i){return i.id===itemId;});
-            if(idx!==-1){
-              items[idx] = Object.assign({}, items[idx], {
-                name:name, description:description,
-                price:price_syp, price_syp:price_syp, price_try:price_try, image_url:image_url
-              });
-            }
+            if(idx!==-1) items[idx] = Object.assign({}, items[idx], {name:name,description:description,price:price_syp,price_syp:price_syp,price_try:price_try,image_url:image_url});
             if(typeof renderMenu==='function') renderMenu();
             if(typeof closeModal==='function') closeModal();
             if(typeof showToast==='function') showToast('\u062a\u0645 \u2713','success');
-          }catch(err){
-            if(typeof showToast==='function') showToast('\u0641\u0634\u0644: '+(err.message||''),'error');
-          }
+          }catch(err){ if(typeof showToast==='function') showToast('\u0641\u0634\u0644: '+(err.message||''),'error'); }
           return;
         }
         return _sei(e, itemId);
@@ -193,24 +218,35 @@
           var catItems = items.filter(function(i){return i.category_id===categoryId;});
           var sort_order = catItems.length ? Math.max.apply(null, catItems.map(function(i){return i.sort_order||0;}))+1 : 1;
           try{
-            var res = await sb.from('items').insert([{
-              category_id: categoryId, name:name, description:description,
-              price:price_syp, price_syp:price_syp, price_try:price_try,
-              image_url:image_url, sort_order:sort_order
-            }]).select().single();
+            var res = await sb.from('items').insert([{category_id:categoryId,name:name,description:description,price:price_syp,price_syp:price_syp,price_try:price_try,image_url:image_url,sort_order:sort_order}]).select().single();
             if(res.error) throw res.error;
             items.push(res.data);
             if(typeof renderMenu==='function') renderMenu();
             if(typeof closeModal==='function') closeModal();
             if(typeof showToast==='function') showToast('\u062a\u0645\u062a \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u2713','success');
-          }catch(err){
-            if(typeof showToast==='function') showToast('\u0641\u0634\u0644: '+(err.message||''),'error');
-          }
+          }catch(err){ if(typeof showToast==='function') showToast('\u0641\u0634\u0644: '+(err.message||''),'error'); }
           return;
         }
         return _sni(e, categoryId);
       };
       window.saveNewItem._dualPatched = true;
+    }
+
+    if(typeof loadAll === 'function' && !loadAll._brandPatched){
+      var _loadAll = loadAll;
+      window.loadAll = async function(){
+        await _loadAll();
+        try{
+          var res = await sb.from('settings').select('*').eq('id',1).maybeSingle();
+          if(res.data){
+            settings.site_name = res.data.site_name || settings.site_name || '\u0634\u063a\u0641';
+            settings.hero_subtitle = res.data.hero_subtitle || settings.hero_subtitle || '';
+            settings.show_logo_icon = res.data.show_logo_icon !== false && res.data.show_logo_icon !== 'false';
+          }
+        }catch(e){}
+        applySiteBranding();
+      };
+      window.loadAll._brandPatched = true;
     }
 
     if(typeof renderAdminPanel === 'function' && !renderAdminPanel._seedRemoved){
@@ -221,22 +257,36 @@
         if(!body) return;
         body.querySelectorAll('button').forEach(function(btn){
           var t = (btn.textContent||'').trim();
-          if(t.indexOf('\u062a\u0639\u0628\u0626\u0629') !== -1 || (btn.getAttribute('onclick')||'').indexOf('seedDefaultData') !== -1){
-            btn.remove();
-          }
+          if(t.indexOf('\u062a\u0639\u0628\u0626\u0629') !== -1 || (btn.getAttribute('onclick')||'').indexOf('seedDefaultData') !== -1) btn.remove();
         });
+        if(typeof adminTab !== 'undefined' && adminTab === 'brand'){
+          var tabContent = document.getElementById('adminTabContent');
+          if(tabContent) injectBrandingForm(tabContent);
+        }
       };
       window.renderAdminPanel._seedRemoved = true;
     }
 
+    if(typeof renderAdminTabContent === 'function' && !renderAdminTabContent._brandPatched){
+      var _ratc = renderAdminTabContent;
+      window.renderAdminTabContent = function(){
+        _ratc();
+        if(typeof adminTab !== 'undefined' && adminTab === 'brand'){
+          var el = document.getElementById('adminTabContent');
+          if(el) injectBrandingForm(el);
+        }
+      };
+      window.renderAdminTabContent._brandPatched = true;
+    }
+
     if(typeof renderMenu === 'function'){ try { renderMenu(); } catch(e){} }
-    if(typeof updateCartBar === 'function'){ try { updateCartBar(); } catch(e){} }
+    applySiteBranding();
     return true;
   }
 
   var tries = 0;
   var t = setInterval(function(){
     tries++;
-    if(installPatches() || tries > 40) clearInterval(t);
-  }, 250);
+    if(installPatches() || tries > 50){ clearInterval(t); applySiteBranding(); }
+  }, 200);
 })();
