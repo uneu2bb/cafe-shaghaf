@@ -18,15 +18,15 @@
       <a href="#" class="logo" id="logoBtn">
         <img id="logoImg" class="logo-img" src="" alt="" style="display:none;">
         <span class="logo-icon" id="logoIcon">☕</span>
-        <span class="logo-text">شغف</span>
+        <span class="logo-text" id="siteNameText">شغف</span>
       </a>
     </div>
   </header>
   <section class="hero">
     <div class="hero-overlay"></div>
     <div class="container hero-content">
-      <h1 class="hero-title">كافيه <span>شغف</span></h1>
-      <p class="hero-subtitle">حيث تلتقي النكهة بالشغف • حلويات فاخرة وقهوة استثنائية</p>
+      <h1 class="hero-title" id="heroTitle">كافيه <span id="heroNameSpan">شغف</span></h1>
+      <p class="hero-subtitle" id="heroSubtitle">حيث تلتقي النكهة بالشغف • حلويات فاخرة وقهوة استثنائية</p>
       <a href="#menuArea" class="btn-primary">استكشف القائمة</a>
     </div>
   </section>
@@ -50,29 +50,14 @@
   <footer class="footer">
     <div class="container">
       <div class="footer-brand-center">
-        <span class="logo-icon">☕</span>
-        <span class="logo-text">شغف</span>
+        <span class="logo-icon" id="footerLogoIcon">☕</span>
+        <span class="logo-text" id="footerNameText">شغف</span>
         <p id="footerDesc">نقدم لكم أفضل الحلويات والقهوة</p>
       </div>
       <div class="footer-social-icons" id="footerSocial"></div>
       <div id="secretArea" class="secret-tap"></div>
     </div>
   </footer>
-  <div class="cart-bar" id="cartBar" style="display:none;">
-    <div class="cart-bar-inner">
-      <span class="cart-count-badge" id="cartCountBadge">0</span>
-      <button class="cart-bar-btn" id="openCartBtn">
-        <span>عرض السلة</span>
-        <span id="cartTotalText">0</span>
-      </button>
-    </div>
-  </div>
-  <div class="modal" id="cartModal">
-    <div class="modal-content">
-      <div class="modal-header"><h2>سلة الطلبات</h2><button class="modal-close" id="closeCartModal">&times;</button></div>
-      <div class="modal-body" id="cartBody"></div>
-    </div>
-  </div>
   <div class="modal" id="adminModal">
     <div class="modal-content">
       <div class="modal-header"><h2>لوحة التحكم</h2><button class="modal-close" id="closeModal">&times;</button></div>
