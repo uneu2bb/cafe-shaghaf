@@ -353,23 +353,95 @@ async function saveBranding(){
 }
 
 function triggerUpload(target,itemId){ uploadTarget={type:target,itemId:itemId||null}; document.getElementById('fileInput').click(); }
+
+/** ضغط الصورة على الجهاز قبل الرفع — Canvas */
+function compressImage(file, maxWidth, quality) {
+  maxWidth = maxWidth || 1000;
+  quality = quality || 0.82;
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onerror = function() { reject(new Error('فشل قراءة الملف')); };
+    reader.onload = function() {
+      var img = new Image();
+      img.onerror = function() { reject(new Error('فشل تحميل الصورة')); };
+      img.onload = function() {
+        var w = img.width;
+        var h = img.height;
+        if (w > maxWidth) {
+          h = Math.round(h * (maxWidth / w));
+          w = maxWidth;
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        var tryTypes = ['image/webp', 'image/jpeg'];
+        function tryExport(i) {
+          if (i >= tryTypes.length) {
+            canvas.toBlob(function(blob) {
+              if (!blob) return reject(new Error('فشل الضغط'));
+              resolve(new File([blob], 'img.jpg', { type: 'image/jpeg' }));
+            }, 'image/jpeg', quality);
+            return;
+          }
+          var type = tryTypes[i];
+          canvas.toBlob(function(blob) {
+            if (!blob || blob.size === 0) return tryExport(i + 1);
+            var ext = type === 'image/webp' ? 'webp' : 'jpg';
+            resolve(new File([blob], 'img.' + ext, { type: type }));
+          }, type, quality);
+        }
+        tryExport(0);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function handleFileSelect(e){
   const file=e.target.files[0]; if(!file)return;
   if(!file.type.startsWith('image/')){ showToast('اختر صورة','error'); return; }
-  if(file.size>5*1024*1024){ showToast('الحد 5MB','error'); return; }
-  showToast('جاري الرفع...','');
+  if(file.size>15*1024*1024){ showToast('الملف كبير جداً (حد 15MB)','error'); return; }
+  showToast('جاري ضغط الصورة...','');
   try{
-    const ext=file.name.split('.').pop()||'jpg';
-    const path=uploadTarget.type+'/'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
-    const {error:upErr}=await sb.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:'3600',upsert:false});
-    if(upErr)throw upErr;
-    const {data:urlData}=sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-    const publicUrl=urlData.publicUrl;
-    if(uploadTarget.type==='logo'){ document.getElementById('setLogoUrl').value=publicUrl; showToast('تم رفع اللوجو ✓ اضغط حفظ','success'); }
-    else if(uploadTarget.type==='favicon'){ document.getElementById('setFaviconUrl').value=publicUrl; showToast('تم رفع الأيقونة ✓ اضغط حفظ','success'); }
-    else if(uploadTarget.type==='item'){ const inp=document.getElementById('editImage'); if(inp)inp.value=publicUrl; showToast('تم رفع الصورة ✓','success'); }
-  }catch(err){ console.error(err); showToast('فشل الرفع: '+(err.message||'تحقق من Storage'),'error'); }
-  e.target.value=''; uploadTarget=null;
+    const originalSize = file.size;
+    let maxW = 1000;
+    if (uploadTarget && uploadTarget.type === 'logo') maxW = 400;
+    if (uploadTarget && uploadTarget.type === 'favicon') maxW = 128;
+    const compressed = await compressImage(file, maxW, 0.82);
+    const savedPct = originalSize > 0 ? Math.round((1 - compressed.size / originalSize) * 100) : 0;
+    showToast('تم الضغط (' + Math.round(compressed.size/1024) + ' KB) — جاري الرفع...','');
+    const ext = compressed.type === 'image/webp' ? 'webp' : 'jpg';
+    const path = uploadTarget.type + '/' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
+    const {error:upErr} = await sb.storage.from(STORAGE_BUCKET).upload(path, compressed, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: compressed.type
+    });
+    if(upErr) throw upErr;
+    const {data:urlData} = sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+    const publicUrl = urlData.publicUrl;
+    if(uploadTarget.type==='logo'){
+      document.getElementById('setLogoUrl').value=publicUrl;
+      showToast('تم رفع اللوجو ✓ (وفّرت ~'+savedPct+'%) اضغط حفظ','success');
+    } else if(uploadTarget.type==='favicon'){
+      document.getElementById('setFaviconUrl').value=publicUrl;
+      showToast('تم رفع الأيقونة ✓ اضغط حفظ','success');
+    } else if(uploadTarget.type==='item'){
+      const inp=document.getElementById('editImage');
+      if(inp) inp.value=publicUrl;
+      const prev = document.querySelector('#adminBody .upload-preview');
+      if(prev) prev.src = publicUrl;
+      showToast('تم رفع الصورة ✓ ('+Math.round(compressed.size/1024)+' KB)','success');
+    }
+  }catch(err){
+    console.error(err);
+    showToast('فشل الرفع: '+(err.message||'تحقق من Storage'),'error');
+  }
+  e.target.value='';
+  uploadTarget=null;
 }
 
 function openAddCategory(){
