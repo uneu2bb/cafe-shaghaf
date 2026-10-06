@@ -1,4 +1,4 @@
-/* Teal brand: dual prices, price under name, persistent branding (localStorage) */
+/* Teal brand: dual prices, price under name, persistent branding (empty hero OK) */
 (function(){
   var BRAND_KEY = 'shaghaf_brand_v1';
 
@@ -58,10 +58,13 @@
   function getBrand(){
     var local = loadBrandLocal();
     var s = (typeof settings !== 'undefined' && settings) ? settings : {};
+    var hasLocalHero = local && Object.prototype.hasOwnProperty.call(local, 'hero_subtitle');
+    var hasLocalName = local && Object.prototype.hasOwnProperty.call(local, 'site_name');
+    var hasLocalIcon = local && Object.prototype.hasOwnProperty.call(local, 'show_logo_icon');
     return {
-      site_name: local.site_name || s.site_name || '\u0634\u063a\u0641',
-      hero_subtitle: (local.hero_subtitle != null ? local.hero_subtitle : (s.hero_subtitle || '')),
-      show_logo_icon: local.show_logo_icon != null ? local.show_logo_icon : (s.show_logo_icon !== false && s.show_logo_icon !== 'false')
+      site_name: hasLocalName ? (local.site_name || '\u0634\u063a\u0641') : (s.site_name || '\u0634\u063a\u0641'),
+      hero_subtitle: hasLocalHero ? local.hero_subtitle : (s.hero_subtitle != null ? s.hero_subtitle : ''),
+      show_logo_icon: hasLocalIcon ? !!local.show_logo_icon : (s.show_logo_icon !== false && s.show_logo_icon !== 'false')
     };
   }
 
@@ -85,8 +88,13 @@
     if(footerName) footerName.textContent = name;
     var heroSpan = document.getElementById('heroNameSpan');
     if(heroSpan) heroSpan.textContent = name;
+
     var heroSub = document.getElementById('heroSubtitle');
-    if(heroSub && hero != null && hero !== '') heroSub.textContent = hero;
+    if(heroSub){
+      // Empty string is valid: hide description when cleared
+      if(hero != null) heroSub.textContent = hero;
+      heroSub.style.display = (hero && String(hero).trim()) ? '' : 'none';
+    }
     try { document.title = '\u0643\u0627\u0641\u064a\u0647 ' + name; } catch(e){}
 
     var logoIcon = document.getElementById('logoIcon');
@@ -125,9 +133,9 @@
     block.innerHTML =
       '<h3 style="margin:16px 0 12px;color:#134E4A">\u0627\u0633\u0645 \u0627\u0644\u0645\u0648\u0642\u0639 \u0648\u0627\u0644\u0648\u0627\u062c\u0647\u0629</h3>'+
       '<div class="form-group"><label>\u0627\u0633\u0645 \u0627\u0644\u0645\u0648\u0642\u0639</label><input type="text" id="setSiteName" value="'+escapeHtmlSafe(b.site_name)+'" placeholder="\u0634\u063a\u0641"></div>'+
-      '<div class="form-group"><label>\u0648\u0635\u0641 \u0623\u0639\u0644\u0649 \u0627\u0644\u0645\u0648\u0642\u0639</label><textarea id="setHeroSubtitle" rows="2">'+escapeHtmlSafe(b.hero_subtitle||'')+'</textarea></div>'+
+      '<div class="form-group"><label>\u0648\u0635\u0641 \u0623\u0639\u0644\u0649 \u0627\u0644\u0645\u0648\u0642\u0639 (\u0627\u062a\u0631\u0643\u0647 \u0641\u0627\u0631\u063a\u0627\u064b \u0644\u0644\u0625\u062e\u0641\u0627\u0621)</label><textarea id="setHeroSubtitle" rows="2">'+escapeHtmlSafe(b.hero_subtitle||'')+'</textarea></div>'+
       '<div class="form-group"><label><input type="checkbox" id="setShowLogoIcon" '+(b.show_logo_icon?'checked':'')+'> \u0625\u0638\u0647\u0627\u0631 \u0623\u064a\u0642\u0648\u0646\u0629/\u0633\u062a\u064a\u0643\u0631</label></div>'+
-      '<p style="font-size:0.8rem;color:#64748B;margin:4px 0 10px">\u064a\u064f\u062d\u0641\u0638 \u0645\u062d\u0644\u064a\u0627\u064b \u0648\u0641\u064a \u0642\u0627\u0639\u062f\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a</p>'+
+      '<p style="font-size:0.8rem;color:#64748B;margin:4px 0 10px">\u0627\u0644\u0648\u0635\u0641 \u0627\u0644\u0641\u0627\u0631\u063a \u064a\u064f\u062d\u0641\u0638 \u0648\u0644\u0646 \u064a\u0631\u062c\u0639</p>'+
       '<button type="button" class="btn-submit" onclick="saveSiteBranding()">\u062d\u0641\u0638 \u0627\u0644\u0647\u0648\u064a\u0629</button>';
     el.appendChild(block);
   }
@@ -288,9 +296,13 @@
           var res = await sb.from('settings').select('*').eq('id',1).maybeSingle();
           if(res.data){
             var local = loadBrandLocal();
-            if(res.data.site_name && !local.site_name) local.site_name = res.data.site_name;
-            if(res.data.hero_subtitle != null && local.hero_subtitle == null) local.hero_subtitle = res.data.hero_subtitle;
-            if(res.data.show_logo_icon != null && local.show_logo_icon == null) local.show_logo_icon = res.data.show_logo_icon;
+            // Never overwrite intentional empty string in localStorage
+            if(!Object.prototype.hasOwnProperty.call(local, 'site_name') && res.data.site_name)
+              local.site_name = res.data.site_name;
+            if(!Object.prototype.hasOwnProperty.call(local, 'hero_subtitle') && res.data.hero_subtitle != null)
+              local.hero_subtitle = res.data.hero_subtitle;
+            if(!Object.prototype.hasOwnProperty.call(local, 'show_logo_icon') && res.data.show_logo_icon != null)
+              local.show_logo_icon = res.data.show_logo_icon;
             saveBrandLocal(local);
           }
         }catch(e){}
