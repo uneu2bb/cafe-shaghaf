@@ -58,6 +58,22 @@
       <div id="secretArea" class="secret-tap"></div>
     </div>
   </footer>
+  <!-- Hidden cart DOM: required by app.js listeners; never shown -->
+  <div class="cart-bar" id="cartBar" style="display:none !important;" aria-hidden="true">
+    <div class="cart-bar-inner">
+      <span class="cart-count-badge" id="cartCountBadge">0</span>
+      <button class="cart-bar-btn" id="openCartBtn" type="button">
+        <span>عرض السلة</span>
+        <span id="cartTotalText">0</span>
+      </button>
+    </div>
+  </div>
+  <div class="modal" id="cartModal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header"><h2>سلة الطلبات</h2><button class="modal-close" id="closeCartModal" type="button">&times;</button></div>
+      <div class="modal-body" id="cartBody"></div>
+    </div>
+  </div>
   <div class="modal" id="adminModal">
     <div class="modal-content">
       <div class="modal-header"><h2>لوحة التحكم</h2><button class="modal-close" id="closeModal">&times;</button></div>
