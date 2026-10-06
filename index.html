@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>كافيه شغف | Café Shaghaf</title>
-  <meta name="description" content="كافيه شغف - حلويات وقهوة">
+  <title>شغف</title>
+  <meta name="description" content="شغف - حلويات وقهوة">
   <link rel="icon" id="faviconLink" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,10 +23,10 @@
     </div>
   </header>
   <section class="hero">
-    <div class="hero-overlay"></div>
+    <div class="hero-overlay" id="heroOverlay"></div>
     <div class="container hero-content">
-      <h1 class="hero-title" id="heroTitle">كافيه <span id="heroNameSpan">شغف</span></h1>
-      <p class="hero-subtitle" id="heroSubtitle">حيث تلتقي النكهة بالشغف • حلويات فاخرة وقهوة استثنائية</p>
+      <h1 class="hero-title" id="heroTitle" style="display:none;">كافيه <span id="heroNameSpan">شغف</span></h1>
+      <p class="hero-subtitle" id="heroSubtitle"></p>
       <a href="#menuArea" class="btn-primary">استكشف القائمة</a>
     </div>
   </section>
@@ -58,7 +58,6 @@
       <div id="secretArea" class="secret-tap"></div>
     </div>
   </footer>
-  <!-- Hidden cart DOM: required by app.js listeners; never shown -->
   <div class="cart-bar" id="cartBar" style="display:none !important;" aria-hidden="true">
     <div class="cart-bar-inner">
       <span class="cart-count-badge" id="cartCountBadge">0</span>
@@ -70,7 +69,7 @@
   </div>
   <div class="modal" id="cartModal" aria-hidden="true">
     <div class="modal-content">
-      <div class="modal-header"><h2>سلة الطلبات</h2><button class="modal-close" id="closeCartModal" type="button">&times;</button></div>
+      <div class="modal-header"><h2>سلة</h2><button class="modal-close" id="closeCartModal" type="button">&times;</button></div>
       <div class="modal-body" id="cartBody"></div>
     </div>
   </div>
