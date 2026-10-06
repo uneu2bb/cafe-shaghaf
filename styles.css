@@ -234,7 +234,7 @@ body.admin-mode .admin-controls { display: block; }
 }
 .admin-menu-btn svg { width: 18px; height: 18px; }
 .admin-dropdown {
-  position: absolute; top: 42px; left: 0; min-width: 140px;
+  position: absolute; top: 42px; left: 0; min-width: 160px;
   background: var(--white); border-radius: 12px;
   box-shadow: 0 8px 28px rgba(0,0,0,0.14);
   border: 1px solid var(--gray-200); padding: 6px;
@@ -421,6 +421,27 @@ body.admin-mode .product-card .drag-handle-item {
   box-shadow: 0 2px 8px rgba(0,0,0,0.12); padding: 2px 4px;
 }
 .drag-handle-item { display: none; }
+
+/* Hidden items — admin sees them, customers do not */
+.product-card.is-hidden {
+  opacity: 0.72;
+  border: 1.5px dashed var(--teal-400);
+}
+.hidden-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  background: rgba(15, 23, 42, 0.85);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+body:not(.admin-mode) .product-card.is-hidden {
+  display: none !important;
+}
 
 @media (max-width: 480px) {
   .hero-title { font-size: 2.1rem; }
