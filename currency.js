@@ -1,4 +1,4 @@
-/* Brand + hide + dual prices + hero cover synced from Supabase */
+/* Brand + hide + dual prices + hero + drag-drop reorder */
 (function(){
   var BRAND_KEY = 'shaghaf_brand_v1';
 
@@ -82,20 +82,15 @@
     var hero = b.hero_subtitle;
     var showIcon = !!b.show_logo_icon;
     var coverUrl = b.hero_image_url || '';
-
     var heroTitle = document.getElementById('heroTitle');
     if(heroTitle) heroTitle.style.display = 'none';
-
     var overlay = document.getElementById('heroOverlay');
-    if(overlay){
-      if(coverUrl){
-        overlay.style.backgroundImage = 'url("'+coverUrl.replace(/"/g,'')+'")';
-        overlay.style.backgroundSize = 'cover';
-        overlay.style.backgroundPosition = 'center';
-        overlay.style.opacity = '0.5';
-      }
+    if(overlay && coverUrl){
+      overlay.style.backgroundImage = 'url("'+coverUrl.replace(/"/g,'')+'")';
+      overlay.style.backgroundSize = 'cover';
+      overlay.style.backgroundPosition = 'center';
+      overlay.style.opacity = '0.5';
     }
-
     var siteNameEl = document.getElementById('siteNameText');
     if(siteNameEl) siteNameEl.textContent = name;
     document.querySelectorAll('.logo-text').forEach(function(el){
@@ -105,19 +100,16 @@
     if(footerName) footerName.textContent = name;
     var heroSpan = document.getElementById('heroNameSpan');
     if(heroSpan) heroSpan.textContent = name;
-
     var heroSub = document.getElementById('heroSubtitle');
     if(heroSub){
       if(hero != null) heroSub.textContent = hero;
       heroSub.style.display = (hero && String(hero).trim()) ? '' : 'none';
     }
     try { document.title = name; } catch(e){}
-
     var logoIcon = document.getElementById('logoIcon');
     var footerIcon = document.getElementById('footerLogoIcon');
     var logoImg = document.getElementById('logoImg');
     var hasLogoImg = logoImg && logoImg.getAttribute('src') && logoImg.style.display !== 'none';
-
     if(logoIcon){
       if(!showIcon || hasLogoImg) logoIcon.style.setProperty('display', 'none', 'important');
       else logoIcon.style.removeProperty('display');
@@ -155,9 +147,7 @@
     if(typeof sb !== 'undefined' && sb){
       clearInterval(_brandFetchTimer);
       fetchBrandFromServer();
-    } else if(_brandFetchTries > 40){
-      clearInterval(_brandFetchTimer);
-    }
+    } else if(_brandFetchTries > 40) clearInterval(_brandFetchTimer);
   }, 250);
 
   setInterval(function(){ try { applySiteBranding(); } catch(e){} }, 800);
@@ -207,40 +197,33 @@
         });
         if(up && up.error) throw up.error;
         if(typeof showToast==='function') showToast('\u062a\u0645 \u062d\u0641\u0638 \u0627\u0644\u0647\u0648\u064a\u0629 \u0623\u0648\u0646\u0644\u0627\u064a\u0646 \u2713','success');
-      } else {
-        if(typeof showToast==='function') showToast('\u062d\u064f\u0641\u0638 \u0645\u062d\u0644\u064a\u0627\u064b','success');
       }
     }catch(err){
-      if(typeof showToast==='function') showToast('\u0641\u0634\u0644 \u0627\u0644\u062d\u0641\u0638 \u0623\u0648\u0646\u0644\u0627\u064a\u0646: '+(err.message||'')+' \u2014 \u0646\u0641\u0651\u0630 SQL','error');
+      if(typeof showToast==='function') showToast('\u0641\u0634\u0644: '+(err.message||''),'error');
     }
   };
 
   window.uploadHeroCover = function(){
     var input = document.getElementById('fileInput');
-    if(!input){ if(typeof showToast==='function') showToast('no file input','error'); return; }
+    if(!input) return;
     input.onchange = async function(e){
       var file = e.target.files && e.target.files[0];
       try { input.value = ''; } catch(x){}
       if(!file) return;
       try{
         var url = null;
-        if(typeof uploadImageToSupabase === 'function'){
-          url = await uploadImageToSupabase(file);
-        } else if(typeof sb !== 'undefined'){
-          var path = 'hero/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.jpg';
+        if(typeof uploadImageToSupabase === 'function') url = await uploadImageToSupabase(file);
+        else if(typeof sb !== 'undefined'){
+          var path = 'hero/'+Date.now()+'.jpg';
           var up = await sb.storage.from('site-images').upload(path, file, { contentType: file.type||'image/jpeg', upsert: true });
           if(up.error) throw up.error;
           url = sb.storage.from('site-images').getPublicUrl(path).data.publicUrl;
-        } else {
-          url = await new Promise(function(resolve,reject){
-            var r=new FileReader(); r.onload=function(){resolve(r.result);}; r.onerror=reject; r.readAsDataURL(file);
-          });
         }
         var field = document.getElementById('setHeroImageUrl');
         if(field) field.value = url;
         var prev = document.getElementById('heroCoverPreview');
         if(prev){ prev.src = url; prev.style.display = 'block'; }
-        if(typeof showToast==='function') showToast('\u062a\u0645 \u0627\u0644\u0631\u0641\u0639 \u2014 \u0627\u0636\u063a\u0637 \u062d\u0641\u0638 \u0627\u0644\u0647\u0648\u064a\u0629','success');
+        if(typeof showToast==='function') showToast('\u062a\u0645 \u0627\u0644\u0631\u0641\u0639 \u2014 \u0627\u062d\u0641\u0638','success');
       }catch(err){
         if(typeof showToast==='function') showToast('\u0641\u0634\u0644: '+(err.message||''),'error');
       }
@@ -265,10 +248,145 @@
       var idx = items.findIndex(function(i){ return i.id === itemId; });
       if(idx !== -1) items[idx].is_hidden = next;
       if(typeof renderMenu === 'function') renderMenu();
-      if(typeof showToast === 'function') showToast(next ? '\u062a\u0645 \u0625\u062e\u0641\u0627\u0621 \u0627\u0644\u0635\u0646\u0641' : '\u0627\u0644\u0635\u0646\u0641 \u0638\u0627\u0647\u0631 \u0627\u0644\u0622\u0646', 'success');
+      if(typeof showToast === 'function') showToast(next ? '\u062a\u0645 \u0625\u062e\u0641\u0627\u0621' : '\u0638\u0627\u0647\u0631 \u0627\u0644\u0622\u0646', 'success');
     }catch(err){
       if(typeof showToast === 'function') showToast('\u0641\u0634\u0644: '+(err.message||''),'error');
     }
+  };
+
+  /* ===== Drag & drop reorder items on main menu (admin) ===== */
+  var _dragItemId = null;
+
+  window.itemDragStart = function(e){
+    if(typeof isAdmin === 'undefined' || !isAdmin){ e.preventDefault(); return; }
+    var card = e.target.closest('.product-card');
+    if(!card) return;
+    _dragItemId = card.getAttribute('data-id');
+    card.classList.add('dragging');
+    try {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', _dragItemId);
+    } catch(err){}
+  };
+
+  window.itemDragOver = function(e){
+    if(!_dragItemId) return;
+    e.preventDefault();
+    try { e.dataTransfer.dropEffect = 'move'; } catch(err){}
+    var card = e.target.closest('.product-card');
+    document.querySelectorAll('.product-card.drag-over').forEach(function(el){ el.classList.remove('drag-over'); });
+    if(card && card.getAttribute('data-id') !== _dragItemId) card.classList.add('drag-over');
+  };
+
+  window.itemDragEnd = function(e){
+    document.querySelectorAll('.product-card.dragging, .product-card.drag-over').forEach(function(el){
+      el.classList.remove('dragging', 'drag-over');
+    });
+    _dragItemId = null;
+  };
+
+  window.itemDrop = async function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    var target = e.target.closest('.product-card');
+    if(!target || !_dragItemId) return;
+    var targetId = target.getAttribute('data-id');
+    if(!targetId || targetId === _dragItemId) return;
+
+    var fromId = _dragItemId;
+    var fromItem = items.find(function(i){ return i.id === fromId; });
+    var toItem = items.find(function(i){ return i.id === targetId; });
+    if(!fromItem || !toItem) return;
+
+    var catId = toItem.category_id;
+    fromItem.category_id = catId;
+
+    var catItems = items.filter(function(i){ return i.category_id === catId; });
+    catItems.sort(function(a,b){ return (a.sort_order||0) - (b.sort_order||0); });
+
+    var fromIdx = catItems.findIndex(function(i){ return i.id === fromId; });
+    var toIdx = catItems.findIndex(function(i){ return i.id === targetId; });
+    if(fromIdx < 0 || toIdx < 0) return;
+
+    var moved = catItems.splice(fromIdx, 1)[0];
+    catItems.splice(toIdx, 0, moved);
+    catItems.forEach(function(it, idx){ it.sort_order = idx + 1; });
+
+    catItems.forEach(function(it){
+      var gi = items.findIndex(function(x){ return x.id === it.id; });
+      if(gi !== -1){
+        items[gi].sort_order = it.sort_order;
+        items[gi].category_id = it.category_id;
+      }
+    });
+
+    if(typeof renderMenu === 'function') renderMenu();
+
+    try{
+      if(typeof sb !== 'undefined'){
+        await Promise.all(catItems.map(function(it){
+          return sb.from('items').update({ sort_order: it.sort_order, category_id: it.category_id }).eq('id', it.id);
+        }));
+        if(typeof showToast === 'function') showToast('\u062a\u0645 \u062d\u0641\u0638 \u062a\u0631\u062a\u064a\u0628 \u0627\u0644\u0623\u0635\u0646\u0627\u0641 \u2713','success');
+      }
+    }catch(err){
+      if(typeof showToast === 'function') showToast('\u0641\u0634\u0644 \u062d\u0641\u0638 \u0627\u0644\u062a\u0631\u062a\u064a\u0628: '+(err.message||''),'error');
+    }
+
+    document.querySelectorAll('.product-card.dragging, .product-card.drag-over').forEach(function(el){
+      el.classList.remove('dragging', 'drag-over');
+    });
+    _dragItemId = null;
+  };
+
+  var _dragCatId = null;
+  window.catDragStart = function(e){
+    var li = e.target.closest('.cat-manage-item');
+    if(!li) return;
+    _dragCatId = li.getAttribute('data-id');
+    li.classList.add('dragging');
+    try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', _dragCatId); } catch(err){}
+  };
+  window.catDragOver = function(e){
+    if(!_dragCatId) return;
+    e.preventDefault();
+    var li = e.target.closest('.cat-manage-item');
+    document.querySelectorAll('.cat-manage-item.drag-over').forEach(function(el){ el.classList.remove('drag-over'); });
+    if(li && li.getAttribute('data-id') !== _dragCatId) li.classList.add('drag-over');
+  };
+  window.catDragEnd = function(e){
+    document.querySelectorAll('.cat-manage-item.dragging, .cat-manage-item.drag-over').forEach(function(el){
+      el.classList.remove('dragging', 'drag-over');
+    });
+    _dragCatId = null;
+  };
+  window.catDrop = async function(e){
+    e.preventDefault();
+    var target = e.target.closest('.cat-manage-item');
+    if(!target || !_dragCatId) return;
+    var targetId = target.getAttribute('data-id');
+    if(!targetId || targetId === _dragCatId) return;
+    var list = categories.slice().sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); });
+    var fromIdx = list.findIndex(function(c){ return c.id === _dragCatId; });
+    var toIdx = list.findIndex(function(c){ return c.id === targetId; });
+    if(fromIdx < 0 || toIdx < 0) return;
+    var moved = list.splice(fromIdx, 1)[0];
+    list.splice(toIdx, 0, moved);
+    list.forEach(function(c, i){ c.sort_order = i + 1; });
+    categories = list;
+    try{
+      if(typeof sb !== 'undefined'){
+        await Promise.all(list.map(function(c){
+          return sb.from('categories').update({ sort_order: c.sort_order }).eq('id', c.id);
+        }));
+      }
+      if(typeof renderCategoryPills === 'function') renderCategoryPills();
+      if(typeof renderAdminPanel === 'function') renderAdminPanel();
+      if(typeof showToast === 'function') showToast('\u062a\u0645 \u062d\u0641\u0638 \u062a\u0631\u062a\u064a\u0628 \u0627\u0644\u0623\u0642\u0633\u0627\u0645 \u2713','success');
+    }catch(err){
+      if(typeof showToast === 'function') showToast('\u0641\u0634\u0644: '+(err.message||''),'error');
+    }
+    _dragCatId = null;
   };
 
   function installPatches(){
@@ -311,8 +429,16 @@
       var _rm = renderMenu;
       window.renderMenu = function(){
         var _all = items;
+        var sorted = _all.slice().sort(function(a,b){
+          var ca = String(a.category_id||'');
+          var cb = String(b.category_id||'');
+          if(ca !== cb) return ca < cb ? -1 : 1;
+          return (Number(a.sort_order)||0) - (Number(b.sort_order)||0);
+        });
         if(typeof isAdmin === 'undefined' || !isAdmin){
-          items = _all.filter(function(i){ return !isItemHidden(i); });
+          items = sorted.filter(function(i){ return !isItemHidden(i); });
+        } else {
+          items = sorted;
         }
         try { _rm(); } finally { items = _all; }
       };
