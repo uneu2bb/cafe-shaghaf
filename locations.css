@@ -1,0 +1,102 @@
+/* ===== Locations / Branches ===== */
+.locations-fab {
+  position: fixed;
+  bottom: 24px;
+  left: 20px;
+  z-index: 90;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--teal-600), var(--teal-500));
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  box-shadow: 0 8px 24px rgba(13, 148, 136, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.locations-fab:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 10px 28px rgba(13, 148, 136, 0.42);
+}
+.locations-fab:active { transform: scale(0.97); }
+.locations-fab svg { flex-shrink: 0; }
+
+.locations-modal .locations-modal-content {
+  max-width: 420px;
+  max-height: 85vh;
+}
+.locations-empty {
+  text-align: center;
+  color: var(--gray-600);
+  font-weight: 600;
+  padding: 28px 12px;
+}
+.locations-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.location-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 16px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.location-card:hover {
+  border-color: var(--teal-400);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.12);
+  transform: translateY(-1px);
+}
+.loc-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--teal-50, #f0fdfa);
+  color: var(--teal-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.loc-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.loc-name {
+  font-weight: 800;
+  font-size: 0.98rem;
+  color: var(--gray-900);
+}
+.loc-note {
+  font-size: 0.82rem;
+  color: var(--gray-600);
+  font-weight: 600;
+}
+.loc-arrow {
+  color: var(--teal-600);
+  font-weight: 800;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+@media (max-width: 480px) {
+  .locations-fab {
+    bottom: 18px;
+    left: 14px;
+    padding: 11px 14px;
+    font-size: 0.9rem;
+  }
+}
