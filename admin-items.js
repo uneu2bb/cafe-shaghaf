@@ -1,17 +1,19 @@
-/* Remove "\u0627\u0644\u0643\u0644" + Admin items-by-category browser */
+/* Remove All filter + search-all + Admin items browser */
 (function(){
   function patchCategoryPills(){
     if(typeof renderCategoryPills !== 'function' || renderCategoryPills._noAll) return;
     window.renderCategoryPills = function(){
       var el = document.getElementById('catPills');
       if(!el) return;
-      if(typeof activeCategory !== 'undefined' && activeCategory === 'all' && categories && categories.length){
+      var hasSearch = (typeof searchQuery !== 'undefined' && searchQuery && String(searchQuery).trim());
+      if(!hasSearch && typeof activeCategory !== 'undefined' && activeCategory === 'all' && categories && categories.length){
         var sorted = categories.slice().sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); });
         activeCategory = sorted[0].id;
       }
       var html = '';
       (categories||[]).slice().sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); }).forEach(function(c){
-        html += '<button class="cat-btn '+(activeCategory===c.id?'active':'')+'" onclick="filterCategory(\''+c.id+'\')">'+escapeHtml(c.name)+'</button>';
+        var active = (!hasSearch && activeCategory===c.id) ? 'active' : '';
+        html += '<button class="cat-btn '+active+'" onclick="filterCategory(\''+c.id+'\')">'+escapeHtml(c.name)+'</button>';
       });
       el.innerHTML = html;
     };
@@ -20,12 +22,72 @@
   }
 
   function fixActiveCat(){
+    var hasSearch = (typeof searchQuery !== 'undefined' && searchQuery && String(searchQuery).trim());
+    if(hasSearch) return;
     if(typeof activeCategory !== 'undefined' && activeCategory === 'all' && typeof categories !== 'undefined' && categories.length){
       var sorted = categories.slice().sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); });
       activeCategory = sorted[0].id;
       if(typeof renderCategoryPills === 'function') renderCategoryPills();
       if(typeof renderMenu === 'function') renderMenu();
     }
+  }
+
+  function patchRenderMenuSearch(){
+    if(typeof renderMenu !== 'function' || renderMenu._searchAllPatched) return;
+    var _rm = renderMenu;
+    window.renderMenu = function(){
+      var hasSearch = (typeof searchQuery !== 'undefined' && searchQuery && String(searchQuery).trim());
+      var savedCat = activeCategory;
+      if(hasSearch) activeCategory = 'all';
+      try {
+        _rm();
+        if(hasSearch){
+          var titleEl = document.getElementById('currentCatTitle');
+          if(titleEl) titleEl.textContent = '\u0646\u062a\u0627\u0626\u062c \u0627\u0644\u0628\u062d\u062b: ' + searchQuery;
+          var grid = document.getElementById('menuGrid');
+          var noRes = document.getElementById('noResults');
+          if(grid && typeof items !== 'undefined'){
+            var q = String(searchQuery).toLowerCase();
+            var list = items.filter(function(i){
+              if(typeof isItemHidden === 'function' && typeof isAdmin !== 'undefined' && !isAdmin && isItemHidden(i)) return false;
+              var n = (i.name||'').toLowerCase();
+              var d = (i.description||'').toLowerCase();
+              return n.indexOf(q) !== -1 || d.indexOf(q) !== -1;
+            });
+            if(list.length === 0){
+              grid.innerHTML = '';
+              if(noRes) noRes.style.display = 'block';
+            } else {
+              if(noRes) noRes.style.display = 'none';
+              if(typeof renderCard === 'function'){
+                grid.innerHTML = list.map(function(item){ return renderCard(item); }).join('');
+              }
+            }
+          }
+        }
+      } finally {
+        if(hasSearch) activeCategory = 'all';
+        else activeCategory = savedCat;
+      }
+    };
+    window.renderMenu._searchAllPatched = true;
+  }
+
+  function patchSearchInput(){
+    var input = document.getElementById('searchInput');
+    if(!input || input._searchPatched) return;
+    input._searchPatched = true;
+    input.addEventListener('input', function(e){
+      searchQuery = e.target.value.trim().toLowerCase();
+      if(searchQuery){
+        activeCategory = 'all';
+      } else if(categories && categories.length){
+        var sorted = categories.slice().sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); });
+        activeCategory = sorted[0].id;
+      }
+      if(typeof renderCategoryPills === 'function') renderCategoryPills();
+      if(typeof renderMenu === 'function') renderMenu();
+    });
   }
 
   window.adminItemsCatId = null;
@@ -130,6 +192,8 @@
   var t = setInterval(function(){
     tries++;
     patchCategoryPills();
+    patchRenderMenuSearch();
+    patchSearchInput();
     patchAdminPanel();
     fixActiveCat();
     if(tries > 50) clearInterval(t);
