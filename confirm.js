@@ -127,3 +127,16 @@
     }
   }, 250);
 })();
+
+/* Make description / image / SYP optional */
+(function(){
+  function makeDescOptional(){
+    var desc = document.getElementById('editDesc');
+    if(desc) desc.removeAttribute('required');
+    var img = document.getElementById('editImage');
+    if(img) img.removeAttribute('required');
+    var syp = document.getElementById('editPriceSyp');
+    if(syp) syp.removeAttribute('required');
+  }
+  setInterval(makeDescOptional, 400);
+})();
