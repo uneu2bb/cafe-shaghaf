@@ -1,4 +1,4 @@
-/* Remove All filter + search-all + Admin items browser */
+/* Remove All filter + search-all + first-category on load + Admin items browser */
 (function(){
   function patchCategoryPills(){
     if(typeof renderCategoryPills !== 'function' || renderCategoryPills._noAll) return;
@@ -6,30 +6,60 @@
       var el = document.getElementById('catPills');
       if(!el) return;
       var hasSearch = (typeof searchQuery !== 'undefined' && searchQuery && String(searchQuery).trim());
+      var changed = false;
       if(!hasSearch && typeof activeCategory !== 'undefined' && activeCategory === 'all' && categories && categories.length){
         var sorted = categories.slice().sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); });
         activeCategory = sorted[0].id;
+        changed = true;
       }
       var html = '';
       (categories||[]).slice().sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); }).forEach(function(c){
-        var active = (!hasSearch && activeCategory===c.id) ? 'active' : '';
+        var active = (!hasSearch && String(activeCategory)===String(c.id)) ? 'active' : '';
         html += '<button class="cat-btn '+active+'" onclick="filterCategory(\''+c.id+'\')">'+escapeHtml(c.name)+'</button>';
       });
       el.innerHTML = html;
+      if(changed && typeof renderMenu === 'function'){
+        try { renderMenu(); } catch(e){}
+      }
     };
     window.renderCategoryPills._noAll = true;
-    try { renderCategoryPills(); } catch(e){}
+  }
+
+  function ensureFirstCategory(){
+    var hasSearch = (typeof searchQuery !== 'undefined' && searchQuery && String(searchQuery).trim());
+    if(hasSearch) return false;
+    if(typeof categories === 'undefined' || !categories || !categories.length) return false;
+    if(typeof activeCategory === 'undefined' || activeCategory === 'all' || activeCategory === null || activeCategory === ''){
+      var sorted = categories.slice().sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); });
+      activeCategory = sorted[0].id;
+      return true;
+    }
+    var exists = categories.some(function(c){ return String(c.id) === String(activeCategory); });
+    if(!exists){
+      var sorted2 = categories.slice().sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); });
+      activeCategory = sorted2[0].id;
+      return true;
+    }
+    return false;
   }
 
   function fixActiveCat(){
-    var hasSearch = (typeof searchQuery !== 'undefined' && searchQuery && String(searchQuery).trim());
-    if(hasSearch) return;
-    if(typeof activeCategory !== 'undefined' && activeCategory === 'all' && typeof categories !== 'undefined' && categories.length){
-      var sorted = categories.slice().sort(function(a,b){ return (a.sort_order||0)-(b.sort_order||0); });
-      activeCategory = sorted[0].id;
+    if(ensureFirstCategory()){
       if(typeof renderCategoryPills === 'function') renderCategoryPills();
       if(typeof renderMenu === 'function') renderMenu();
     }
+  }
+
+  function patchLoadAll(){
+    if(typeof loadAll !== 'function' || loadAll._firstCatPatched) return;
+    var _la = loadAll;
+    window.loadAll = async function(){
+      await _la.apply(this, arguments);
+      ensureFirstCategory();
+      if(typeof renderCategoryPills === 'function') renderCategoryPills();
+      if(typeof renderMenu === 'function') renderMenu();
+    };
+    window.loadAll._firstCatPatched = true;
   }
 
   function patchRenderMenuSearch(){
@@ -192,10 +222,17 @@
   var t = setInterval(function(){
     tries++;
     patchCategoryPills();
+    patchLoadAll();
     patchRenderMenuSearch();
     patchSearchInput();
     patchAdminPanel();
     fixActiveCat();
-    if(tries > 50) clearInterval(t);
-  }, 200);
+    if(tries > 60) clearInterval(t);
+  }, 150);
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(fixActiveCat, 500); });
+  } else {
+    setTimeout(fixActiveCat, 500);
+  }
 })();
