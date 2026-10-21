@@ -1,4 +1,4 @@
-/* Designer credits — secret panel + public bar */
+/* Designer credits — secret panel + public bar (collapsible) */
 (function () {
   var STORAGE_KEY = 'shaghaf_designer_credits';
   var DEFAULT_PASS = 'm8n2024';
@@ -123,31 +123,11 @@
     );
     bar.className =
       'designer-credit-bar ' +
-      (credits.position === 'top' ? 'pos-top' : 'pos-bottom');
+      (credits.position === 'top' ? 'pos-top' : 'pos-bottom') +
+      ' is-collapsed';
     bar.style.display = 'block';
 
     var icons = '';
-    if (credits.telegram) {
-      icons +=
-        '<a class="dc-icon tg" href="' +
-        esc(credits.telegram) +
-        '" target="_blank" rel="noopener" aria-label="Telegram">' +
-        '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.2 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06-.01.13-.02.2z"/></svg></a>';
-    }
-    if (credits.facebook) {
-      icons +=
-        '<a class="dc-icon fb" href="' +
-        esc(credits.facebook) +
-        '" target="_blank" rel="noopener" aria-label="Facebook">' +
-        '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg></a>';
-    }
-    if (credits.instagram) {
-      icons +=
-        '<a class="dc-icon ig" href="' +
-        esc(credits.instagram) +
-        '" target="_blank" rel="noopener" aria-label="Instagram">' +
-        '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm10 2H7a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3zm-5 3.5A4.5 4.5 0 1112 16.5 4.5 4.5 0 0112 7.5zm0 2A2.5 2.5 0 1014.5 12 2.5 2.5 0 0012 9.5zM17.5 6.75a1 1 0 11-1 1 1 1 0 011-1z"/></svg></a>';
-    }
     if (credits.whatsapp) {
       var w = waLink(credits.whatsapp);
       if (w) {
@@ -158,30 +138,71 @@
           '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.47 14.38c-.29-.15-1.7-.84-1.96-.93-.26-.1-.45-.15-.64.15-.19.29-.74.93-.9 1.12-.17.19-.33.21-.62.07-.29-.15-1.22-.45-2.33-1.43-.86-.77-1.44-1.72-1.61-2.01-.17-.29-.02-.45.13-.6.13-.13.29-.33.43-.5.15-.17.19-.29.29-.48.1-.19.05-.36-.02-.5-.07-.15-.64-1.54-.88-2.11-.23-.55-.47-.48-.64-.48h-.55c-.19 0-.5.07-.76.36-.26.29-1 1-1 2.43s1.02 2.82 1.17 3.01c.15.19 2.01 3.07 4.87 4.3.68.29 1.21.47 1.62.6.68.21 1.3.18 1.79.11.55-.08 1.7-.7 1.94-1.37.24-.67.24-1.25.17-1.37-.07-.12-.26-.19-.55-.33z"/><path d="M12 2a10 10 0 00-8.48 15.2L2 22l4.93-1.29A10 10 0 1012 2zm0 18.2a8.2 8.2 0 01-4.18-1.15l-.3-.18-2.93.77.78-2.86-.2-.3A8.2 8.2 0 1112 20.2z"/></svg></a>';
       }
     }
+    if (credits.instagram) {
+      icons +=
+        '<a class="dc-icon ig" href="' +
+        esc(credits.instagram) +
+        '" target="_blank" rel="noopener" aria-label="Instagram">' +
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm10 2H7a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3zm-5 3.5A4.5 4.5 0 1112 16.5 4.5 4.5 0 0112 7.5zm0 2A2.5 2.5 0 1014.5 12 2.5 2.5 0 0012 9.5zM17.5 6.75a1 1 0 11-1 1 1 1 0 011-1z"/></svg></a>';
+    }
+    if (credits.facebook) {
+      icons +=
+        '<a class="dc-icon fb" href="' +
+        esc(credits.facebook) +
+        '" target="_blank" rel="noopener" aria-label="Facebook">' +
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg></a>';
+    }
+    if (credits.telegram) {
+      icons +=
+        '<a class="dc-icon tg" href="' +
+        esc(credits.telegram) +
+        '" target="_blank" rel="noopener" aria-label="Telegram">' +
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.2 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06-.01.13-.02.2z"/></svg></a>';
+    }
 
     bar.innerHTML =
       '<div class="dc-inner">' +
-      '  <div class="dc-label">' +
-      esc(credits.label || '') +
-      ' <span class="dc-chev">\u2303</span></div>' +
-      '  <div class="dc-name">' +
+      '  <button type="button" class="dc-toggle" id="dcToggleBtn" aria-expanded="false">' +
+      '    <span class="dc-label-text">' +
+      esc(credits.label || '\u062a\u0645 \u062a\u0635\u0645\u064a\u0645 \u0627\u0644\u0645\u0648\u0642\u0639 \u0628\u0648\u0627\u0633\u0637\u0629') +
+      '</span>' +
+      '    <span class="dc-chev" aria-hidden="true">\u25be</span>' +
+      '  </button>' +
+      '  <div class="dc-expand" id="dcExpandPanel">' +
+      '    <div class="dc-name">' +
       esc(credits.name) +
       '</div>' +
-      (icons ? '<div class="dc-icons">' + icons + '</div>' : '') +
+      (icons ? '    <div class="dc-icons">' + icons + '</div>' : '') +
+      '  </div>' +
       '</div>';
+
+    var toggle = document.getElementById('dcToggleBtn');
+    if (toggle) {
+      toggle.onclick = function () {
+        var open = bar.classList.toggle('is-open');
+        bar.classList.toggle('is-collapsed', !open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      };
+    }
   }
 
   function injectStyles() {
-    if (document.getElementById('designerCreditStyles')) return;
+    var oldS = document.getElementById('designerCreditStyles');
+    if (oldS) oldS.remove();
     var s = document.createElement('style');
     s.id = 'designerCreditStyles';
     s.textContent =
       '.designer-credit-bar{display:none;width:100%;z-index:80;background:linear-gradient(180deg,#0a1f1e 0%,#0f2927 100%);color:#d4e8e5;border-top:1px solid rgba(255,255,255,.06);font-family:inherit}' +
       '.designer-credit-bar.pos-bottom{position:relative;margin-top:0}' +
       '.designer-credit-bar.pos-top{position:sticky;top:0;border-top:none;border-bottom:1px solid rgba(255,255,255,.06);box-shadow:0 4px 20px rgba(0,0,0,.2)}' +
-      '.dc-inner{max-width:480px;margin:0 auto;padding:18px 16px 20px;text-align:center}' +
-      '.dc-label{font-size:.78rem;font-weight:600;opacity:.75;letter-spacing:.02em;margin-bottom:4px}' +
-      '.dc-chev{display:inline-block;opacity:.5;font-size:.7rem;margin-right:2px}' +
+      '.dc-inner{max-width:480px;margin:0 auto;padding:10px 16px 12px;text-align:center}' +
+      '.dc-toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;border:none;cursor:pointer;padding:6px 10px;border-radius:999px;font-family:inherit;color:inherit;transition:background .15s}' +
+      '.dc-toggle:hover{background:rgba(255,255,255,.06)}' +
+      '.dc-label-text{font-size:.82rem;font-weight:600;opacity:.8;letter-spacing:.02em}' +
+      '.dc-chev{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:.85rem;opacity:.7;transition:transform .25s ease;line-height:1}' +
+      '.designer-credit-bar.is-open .dc-chev{transform:rotate(180deg)}' +
+      '.dc-expand{overflow:hidden;max-height:0;opacity:0;transition:max-height .32s ease,opacity .25s ease,margin .25s ease;margin:0}' +
+      '.designer-credit-bar.is-open .dc-expand{max-height:160px;opacity:1;margin-top:10px}' +
       '.dc-name{font-size:1.05rem;font-weight:800;color:#e8f5f3;letter-spacing:.04em;margin-bottom:12px}' +
       '.dc-icons{display:flex;justify-content:center;align-items:center;gap:14px}' +
       '.dc-icon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none;transition:transform .2s,box-shadow .2s;box-shadow:0 3px 12px rgba(0,0,0,.25)}' +
